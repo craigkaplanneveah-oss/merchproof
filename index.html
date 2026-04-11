@@ -536,11 +536,18 @@ async function recalcVendorFit() {
 
 async function renderVendor() {
   const page = await vendorPDF.getPage(vendorPage);
-  const vp   = page.getViewport({ scale: vendorScale });
+  // Render at 2× for crisp display, then set CSS size to 1× so it fits the panel
+  const vp   = page.getViewport({ scale: vendorScale * 2 });
   const vc   = document.getElementById('vendorCanvas');
   const sc   = document.getElementById('selCanvas');
+  // Canvas pixel size = 2× (high-res)
   vc.width = sc.width = vp.width;
   vc.height = sc.height = vp.height;
+  // CSS display size = 1× (fits the panel, but renders crisp)
+  vc.style.width  = (vp.width  / 2) + 'px';
+  vc.style.height = (vp.height / 2) + 'px';
+  sc.style.width  = (vp.width  / 2) + 'px';
+  sc.style.height = (vp.height / 2) + 'px';
   await page.render({ canvasContext: vc.getContext('2d'), viewport: vp }).promise;
   clearSel(); hasSel = false;
   document.getElementById('pasteBtn').disabled = true;
@@ -585,6 +592,7 @@ function toggleCrop() {
 function vendorPos(e) {
   const vc = document.getElementById('vendorCanvas');
   const r  = vc.getBoundingClientRect();
+  // vc.width is 2× the CSS display width, so multiply by 2 to get canvas coords
   return {
     x: (e.clientX - r.left) * (vc.width  / r.width),
     y: (e.clientY - r.top)  * (vc.height / r.height)
@@ -670,15 +678,18 @@ async function doPaste() {
   tmp.getContext('2d').drawImage(hiC, cx, cy, cw, ch, 0, 0, cw, ch);
   const url = tmp.toDataURL('image/png');
 
-  // Initial display size — divide by 4 to match screen scale, then fit to artArea
+  // Initial display size — fill as much of the artArea as possible by default.
+  // The hi-res crop (cw×ch) maps to the proof coordinate space.
+  // tmplNatW/H is the template's natural pixel size; pasteLayer matches that.
+  // We want the crop to fill ~92% of the artArea width or height (whichever fits).
   const pl  = document.getElementById('pasteLayer');
   const plW = pl.offsetWidth;
   const plH = pl.offsetHeight;
-  let iw = cw / 4, ih = ch / 4;
-  const ratio = iw / ih;
-  const maxW = plW * 0.88, maxH = plH * 0.85;
-  if (iw > maxW) { iw = maxW; ih = iw / ratio; }
-  if (ih > maxH) { ih = maxH; iw = ih * ratio; }
+  const ratio = cw / ch;
+  // Start at full artArea size and scale down to fit
+  let iw = plW * 0.92;
+  let ih = iw / ratio;
+  if (ih > plH * 0.92) { ih = plH * 0.92; iw = ih * ratio; }
   iw = Math.round(iw); ih = Math.round(ih);
 
   document.getElementById('artPh').style.display = 'none';
