@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MerchProof — Promotional Source</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;background:#1a1a1a;color:#e0e0e0}
+
+/* ─── LOGIN ─── */
+#loginScreen{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:#1a1a1a}
+.lcard{background:#222;border:1px solid #333;border-radius:14px;padding:42px 38px;width:340px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.7)}
+.ltitle{font-size:26px;font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:4px}
+.ltitle em{color:#5db535;font-style:normal}
+.lsub{font-size:12px;color:#555;margin-bottom:26px}
+.linput{width:100%;padding:11px 14px;background:#2a2a2a;border:1.5px solid #3a3a3a;border-radius:8px;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:6px;transition:border-color .2s}
+.linput:focus{border-color:#5db535}
+.lerr{font-size:12px;color:#e53e3e;height:18px;margin-bottom:8px;text-align:left}
+.lbtn{width:100%;padding:12px;background:#5db535;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s}
+.lbtn:hover{background:#4a9a29}
+.lfoot{margin-top:18px;font-size:11px;color:#444}
+
+/* ─── SETUP SCREEN (first run — upload template) ─── */
+#setupScreen{position:fixed;inset:0;z-index:998;display:none;align-items:center;justify-content:center;background:#1a1a1a}
+.scard{background:#222;border:1px solid #333;border-radius:14px;padding:42px 38px;width:480px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.7)}
+.scard h2{font-size:20px;font-weight:700;color:#fff;margin-bottom:8px}
+.scard p{font-size:13px;color:#666;margin-bottom:28px;line-height:1.6}
+.setup-zone{border:2px dashed #3a3a3a;border-radius:10px;padding:36px 20px;margin-bottom:20px;cursor:pointer;transition:all .2s;background:#1e1e1e}
+.setup-zone:hover,.setup-zone.drag{border-color:#5db535;background:rgba(93,181,53,.05)}
+.setup-zone-ico{font-size:38px;margin-bottom:10px;opacity:.5}
+.setup-zone-t{font-size:14px;font-weight:600;color:#777;margin-bottom:5px}
+.setup-zone-s{font-size:12px;color:#444}
+.setup-browse{display:inline-block;margin-top:12px;padding:9px 22px;background:#5db535;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.setup-note{font-size:11px;color:#3a3a3a;margin-top:14px;line-height:1.6}
+
+/* ─── APP ─── */
+#app{display:none;flex-direction:column;height:100vh}
+
+/* TOP BAR */
+.bar{height:44px;background:#222;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0}
+.logo{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.5px;white-space:nowrap}
+.logo em{color:#5db535;font-style:normal}
+.bsep{width:1px;height:22px;background:#2a2a2a}
+.bbtn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border:none;white-space:nowrap;transition:all .15s}
+.bbtn.off{background:#2a2a2a;color:#777;border:1px solid #333}.bbtn.off:hover{background:#333;color:#bbb}
+.bbtn.on{background:rgba(93,181,53,.15);color:#5db535;border:1px solid #5db535}
+.bbtn.paste{background:#dd6b20;color:#fff}.bbtn.paste:hover{background:#b85515}
+.bbtn.paste:disabled{background:#2a2a2a;color:#3a3a3a;cursor:default}
+.bbtn.export{background:#5db535;color:#fff}.bbtn.export:hover{background:#4a9a29}
+.hint{font-size:11px;color:#4a4a4a;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
+.sp{flex:1}
+.tbsm{padding:4px 10px;background:transparent;border:1px solid #2a2a2a;border-radius:5px;color:#444;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.tbsm:hover{border-color:#444;color:#888}
+
+/* ─── PANELS ─── */
+.panels{display:flex;flex:1;overflow:hidden}
+
+/* LEFT: Vendor PDF */
+.lpanel{width:50%;background:#111;border-right:2px solid #222;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.pdfarea{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;background:#111}
+
+/* Drop / upload zone */
+.upzone{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#3a3a3a;text-align:center;cursor:pointer;transition:background .2s}
+.upzone.drag{background:rgba(93,181,53,.05);outline:2px dashed #5db535;outline-offset:-4px}
+.up-ico{font-size:42px;opacity:.3}
+.up-t{font-size:14px;font-weight:600;color:#4a4a4a}
+.up-s{font-size:12px;color:#333;line-height:1.7}
+.up-btn{padding:8px 20px;background:#5db535;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+
+/* Canvas wrap — crop events attached here */
+.cwrap{position:relative;display:inline-block;line-height:0}
+.cwrap.con{cursor:crosshair}
+#vendorCanvas{display:block;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+#selCanvas{position:absolute;top:0;left:0;pointer-events:none;z-index:5}
+
+/* Bottom controls */
+.lctrl{height:38px;background:#181818;border-top:1px solid #222;display:flex;align-items:center;padding:0 8px;gap:5px;flex-shrink:0}
+.uplbl2{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;background:#222;border:1px solid #2a2a2a;border-radius:4px;color:#666;font-size:11px;cursor:pointer;white-space:nowrap}.uplbl2:hover{background:#2a2a2a;color:#aaa}
+.nb{padding:3px 7px;background:#222;border:1px solid #222;border-radius:3px;color:#555;font-size:11px;cursor:pointer;font-family:inherit}.nb:hover{background:#2a2a2a;color:#aaa}.nb:disabled{opacity:.25;cursor:default}
+.pgi{font-size:11px;color:#3a3a3a;font-family:monospace}
+.zg{display:flex;align-items:center;gap:2px;margin-left:auto}
+.zb{width:22px;height:22px;background:#222;border:none;border-radius:3px;color:#555;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}.zb:hover{background:#2a2a2a;color:#aaa}
+.zd{font-size:10px;color:#3a3a3a;width:36px;text-align:center;font-family:monospace}
+
+/* RIGHT: PS Template */
+.rpanel{flex:1;background:#777;display:flex;align-items:flex-start;justify-content:center;overflow:hidden;padding:8px}
+#proofWrapper{flex-shrink:0;position:relative}
+
+/* proofDoc holds: template canvas + paste overlay */
+#proofDoc{
+  position:relative;
+  transform-origin:top left;
+  line-height:0; /* removes gap under canvas */
+  box-shadow:0 6px 30px rgba(0,0,0,.5);
+}
+#templateCanvas{display:block}
+
+/* Paste overlay — sits pixel-perfect over the template canvas */
+#pasteLayer{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  overflow:hidden;
+  pointer-events:none; /* enabled only when not exporting */
+}
+#pasteLayer.active{pointer-events:auto}
+
+.artph{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:rgba(0,0,0,.18);font-size:14px;pointer-events:none;text-align:center;
+  font-family:Arial;line-height:1.6;
+}
+
+/* Pasted image elements */
+.pimg{position:absolute;cursor:move;user-select:none}
+.pimg img{display:block;width:100%;height:100%;pointer-events:none}
+.pimg .border{position:absolute;inset:0;outline:1.5px dashed transparent;pointer-events:none;z-index:2}
+.pimg:hover .border,.pimg.sel .border{outline-color:rgba(93,181,53,.8)}
+.prm{position:absolute;top:-10px;right:-10px;width:22px;height:22px;background:#e53e3e;color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:12px;display:none;align-items:center;justify-content:center;z-index:10;line-height:1;padding:0;font-family:Arial}
+.pimg:hover .prm,.pimg.sel .prm{display:flex}
+/* 8 resize handles */
+.rh{position:absolute;width:12px;height:12px;background:#5db535;border:2px solid #fff;border-radius:2px;z-index:10;display:none}
+.pimg:hover .rh,.pimg.sel .rh{display:block}
+.rh.nw{top:-6px;left:-6px;cursor:nw-resize}.rh.n{top:-6px;left:calc(50% - 6px);cursor:n-resize}
+.rh.ne{top:-6px;right:-6px;cursor:ne-resize}.rh.e{top:calc(50% - 6px);right:-6px;cursor:e-resize}
+.rh.se{bottom:-6px;right:-6px;cursor:se-resize}.rh.s{bottom:-6px;left:calc(50% - 6px);cursor:s-resize}
+.rh.sw{bottom:-6px;left:-6px;cursor:sw-resize}.rh.w{top:calc(50% - 6px);left:-6px;cursor:w-resize}
+
+/* ─── SETTINGS MODAL ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:800;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#222;border:1px solid #333;border-radius:13px;padding:30px;width:360px;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.modal h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:6px}
+.modal p{font-size:12px;color:#555;margin-bottom:20px;line-height:1.5}
+.modal label{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px}
+.modal input{width:100%;padding:10px 12px;background:#1e1e1e;border:1.5px solid #333;border-radius:7px;color:#fff;font-size:14px;font-family:inherit;margin-bottom:12px;outline:none;transition:border-color .15s}
+.modal input:focus{border-color:#5db535}
+.merr{font-size:12px;color:#fc8181;min-height:16px;margin-bottom:8px}
+.mrow{display:flex;gap:10px}
+.mbtn{flex:1;padding:10px;border:none;border-radius:7px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer}
+.mbtn.p{background:#5db535;color:#fff}.mbtn.p:hover{background:#4a9a29}
+.mbtn.s{background:#2a2a2a;color:#777}.mbtn.s:hover{background:#333}
+
+/* ─── TOAST ─── */
+#toast{position:fixed;bottom:16px;right:16px;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all .2s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.s{background:#276749;color:#9ae6b4;border:1px solid #38a169}
+#toast.e{background:#742a2a;color:#fed7d7;border:1px solid #c53030}
+#toast.i{background:#2d3748;color:#e2e8f0;border:1px solid #4a5568}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen">
+  <div class="lcard">
+    <div class="ltitle">MERCH<em>PROOF</em></div>
+    <div class="lsub">Promotional Source — CSR Tool</div>
+    <input class="linput" type="password" id="pwdIn" placeholder="Password"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="lerr" id="loginErr"></div>
+    <button class="lbtn" onclick="doLogin()">Sign In</button>
+    <div class="lfoot">Promotional Source Corporation — Internal Use Only</div>
+  </div>
+</div>
+
+<!-- ══ FIRST-RUN SETUP (upload template) ══ -->
+<div id="setupScreen">
+  <div class="scard">
+    <h2>👓 Set Up Your Proof Template</h2>
+    <p>Upload your Promotional Source proof template PDF once.<br>
+       It will be saved to this browser and used automatically every session.</p>
+    <div class="setup-zone" id="setupZone">
+      <div class="setup-zone-ico">📄</div>
+      <div class="setup-zone-t">Drop your template PDF here</div>
+      <div class="setup-zone-s">or click Browse to select it</div>
+      <label class="setup-browse">Browse PDF
+        <input type="file" id="templateFile" accept=".pdf" style="display:none" onchange="loadTemplate(this)">
+      </label>
+    </div>
+    <div class="setup-note">
+      Your template PDF is stored locally in this browser — it is never uploaded anywhere.<br>
+      To replace it later, use <strong>Settings → Replace Template</strong>.
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <div class="bar">
+    <div class="logo">MERCH<em>PROOF</em></div>
+    <div class="bsep"></div>
+    <button class="bbtn off" id="cropBtn" onclick="toggleCrop()">✂ Crop Mode: OFF</button>
+    <button class="bbtn paste" id="pasteBtn" onclick="doPaste()" disabled>Paste to Proof →</button>
+    <span class="hint" id="hint">Upload a vendor PDF on the left to begin</span>
+    <div class="sp"></div>
+    <button class="bbtn export" onclick="doExport()">⬇ Export PDF</button>
+    <button class="tbsm" onclick="openSettings()">⚙ Settings</button>
+    <button class="tbsm" onclick="doLogout()">Sign Out</button>
+  </div>
+
+  <div class="panels">
+
+    <!-- LEFT: Vendor PDF -->
+    <div class="lpanel">
+      <div class="pdfarea" id="pdfarea">
+        <div class="upzone" id="upzone">
+          <div class="up-ico">📋</div>
+          <div class="up-t">Drop vendor proof here</div>
+          <div class="up-s">Drag & drop or click to browse</div>
+          <label class="up-btn">Browse PDF
+            <input type="file" id="vendorFile" accept=".pdf" style="display:none" onchange="loadVendor(this)">
+          </label>
+        </div>
+        <div class="cwrap" id="cwrap" style="display:none">
+          <canvas id="vendorCanvas"></canvas>
+          <canvas id="selCanvas"></canvas>
+        </div>
+      </div>
+      <div class="lctrl" id="lctrl" style="display:none">
+        <label class="uplbl2">📄 New PDF
+          <input type="file" id="vendorFile2" accept=".pdf" style="display:none" onchange="loadVendor(this)">
+        </label>
+        <button class="nb" id="prevBtn" onclick="gotoPage(-1)" disabled>◀</button>
+        <button class="nb" id="nextBtn" onclick="gotoPage(1)"  disabled>▶</button>
+        <span class="pgi" id="pgi">1/1</span>
+        <div class="zg">
+          <button class="zb" onclick="doZoom(-.15)">−</button>
+          <span class="zd" id="zd">Fit</span>
+          <button class="zb" onclick="doZoom(.15)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PS Template (rendered from uploaded PDF) -->
+    <div class="rpanel" id="rpanel">
+      <div id="proofWrapper">
+        <div id="proofDoc">
+          <canvas id="templateCanvas"></canvas>
+          <div id="pasteLayer" class="active">
+            <div class="artph" id="artPh">Paste cropped artwork here</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ SETTINGS MODAL ══ -->
+<div class="modal-bg" id="settingsBg">
+  <div class="modal">
+    <h3>⚙ Settings</h3>
+    <p>Change the app password, or replace the proof template.</p>
+    <label>Current Password</label>
+    <input type="password" id="sCur" placeholder="Current password">
+    <label>New Password</label>
+    <input type="password" id="sNew" placeholder="New password (min 4 chars)">
+    <label>Confirm New Password</label>
+    <input type="password" id="sCfm" placeholder="Re-enter new password">
+    <div class="merr" id="sErr"></div>
+    <div class="mrow" style="margin-bottom:14px">
+      <button class="mbtn s" onclick="closeSettings()">Cancel</button>
+      <button class="mbtn p" onclick="savePwd()">Update Password</button>
+    </div>
+    <hr style="border-color:#2a2a2a;margin-bottom:14px">
+    <label style="display:block;margin-bottom:10px">Replace Proof Template PDF</label>
+    <label class="setup-browse" style="font-size:12px;padding:7px 16px">
+      Upload New Template
+      <input type="file" id="replaceTemplate" accept=".pdf" style="display:none" onchange="replaceTemplatePDF(this)">
+    </label>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- PDF.js, jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+'use strict';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ── Storage wrapper ─────────────────────────────────── */
+const ST = {
+  get(k)    { return localStorage.getItem(k); },
+  set(k, v) { localStorage.setItem(k, v); },
+  del(k)    { localStorage.removeItem(k); }
+};
+
+/* ── State ───────────────────────────────────────────── */
+const DEF_PWD = 'PSC2026';
+let pwd = DEF_PWD;
+
+// Vendor PDF
+let vendorPDF = null, vendorPage = 1, vendorPages = 0;
+let vendorFitScale = 1, vendorScale = 1;
+
+// Template PDF
+let templatePDF = null, tmplNatW = 0, tmplNatH = 0;
+let proofScale = 1;
+
+// Crop
+let cropOn = false, dragging = false, hasSel = false;
+let sx = 0, sy = 0, ex = 0, ey = 0;
+
+// Drag/resize
+let dragState = null;
+
+/* ── Bootstrap ───────────────────────────────────────── */
+(async () => {
+  const p = ST.get('mp_pwd'); if (p) pwd = p;
+
+  if (sessionStorage.getItem('mp_auth') !== '1') return; // login screen stays visible
+
+  // Logged in — check if template exists
+  const tmplB64 = ST.get('mp_template');
+  if (!tmplB64) {
+    showSetup();
+  } else {
+    await initTemplateFromB64(tmplB64);
+    showApp();
+  }
+})();
+
+window.addEventListener('resize', () => {
+  scaleProof();
+  if (vendorPDF) recalcVendorFit().then(() => { vendorScale = vendorFitScale; renderVendor(); });
+});
+
+/* ── Auth ─────────────────────────────────────────────── */
+function doLogin() {
+  const v = document.getElementById('pwdIn').value;
+  if (v !== pwd) {
+    const e = document.getElementById('loginErr');
+    e.textContent = '✕ Incorrect password';
+    document.getElementById('pwdIn').value = '';
+    setTimeout(() => e.textContent = '', 3000);
+    return;
+  }
+  sessionStorage.setItem('mp_auth', '1');
+  document.getElementById('loginScreen').style.display = 'none';
+
+  const tmplB64 = ST.get('mp_template');
+  if (!tmplB64) {
+    showSetup();
+  } else {
+    initTemplateFromB64(tmplB64).then(() => showApp());
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('mp_auth');
+  location.reload();
+}
+
+function showSetup() {
+  document.getElementById('setupScreen').style.display = 'flex';
+  initSetupDrop();
+}
+
+function showApp() {
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  initVendorDrop();
+  initCropEvents();
+  requestAnimationFrame(scaleProof);
+}
+
+/* ── Settings ─────────────────────────────────────────── */
+function openSettings()  { document.getElementById('settingsBg').classList.add('open'); }
+function closeSettings() {
+  document.getElementById('settingsBg').classList.remove('open');
+  ['sCur','sNew','sCfm'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sErr').textContent = '';
+}
+function savePwd() {
+  const cur = document.getElementById('sCur').value;
+  const nw  = document.getElementById('sNew').value;
+  const cf  = document.getElementById('sCfm').value;
+  const err = document.getElementById('sErr');
+  if (cur !== pwd)     { err.textContent = 'Current password is incorrect.'; return; }
+  if (nw.length < 4)  { err.textContent = 'Password must be at least 4 characters.'; return; }
+  if (nw !== cf)       { err.textContent = 'Passwords do not match.'; return; }
+  pwd = nw; ST.set('mp_pwd', nw);
+  closeSettings(); toast('Password updated!', 's');
+}
+async function replaceTemplatePDF(inp) {
+  const f = inp.files[0]; if (!f) return;
+  await saveTemplateFile(f);
+  closeSettings();
+  toast('Template replaced — reloading…', 's');
+  setTimeout(() => location.reload(), 1200);
+}
+
+/* ── Template Setup Drop Zone ─────────────────────────── */
+function initSetupDrop() {
+  const zone = document.getElementById('setupZone');
+  zone.addEventListener('dragenter', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragover',  e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  zone.addEventListener('dragleave', e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag'); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') {
+      document.getElementById('templateFile').value = '';
+      loadTemplateFile(f);
+    } else {
+      toast('Please drop a PDF file', 'e');
+    }
+  });
+  zone.addEventListener('click', e => {
+    if (!['LABEL','INPUT','BUTTON'].includes(e.target.tagName))
+      document.getElementById('templateFile').click();
+  });
+}
+
+function loadTemplate(inp) { const f = inp.files[0]; if (f) loadTemplateFile(f); }
+
+async function loadTemplateFile(file) {
+  toast('Saving template…', 'i');
+  await saveTemplateFile(file);
+  const b64 = ST.get('mp_template');
+  await initTemplateFromB64(b64);
+  showApp();
+  toast('Template saved! You\'re all set.', 's');
+}
+
+async function saveTemplateFile(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Store as base64 data URL
+      ST.set('mp_template', reader.result);
+      res();
+    };
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function initTemplateFromB64(dataUrl) {
+  // dataUrl is "data:application/pdf;base64,..."
+  const base64 = dataUrl.split(',')[1];
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  templatePDF = await pdfjsLib.getDocument({ data: bytes }).promise;
+
+  // Render page 1 of template at high resolution (3× for quality)
+  const page = await templatePDF.getPage(1);
+  const vp   = page.getViewport({ scale: 3 }); // 3× = crisp at any zoom
+  tmplNatW = vp.width;
+  tmplNatH = vp.height;
+
+  const tc = document.getElementById('templateCanvas');
+  tc.width  = tmplNatW;
+  tc.height = tmplNatH;
+  await page.render({ canvasContext: tc.getContext('2d'), viewport: vp }).promise;
+}
+
+/* ── Proof scaling ────────────────────────────────────── */
+/* The template canvas has natural size tmplNatW × tmplNatH.
+   We CSS-scale proofDoc to fit the right panel.              */
+function scaleProof() {
+  if (!tmplNatW) return;
+  const rp = document.getElementById('rpanel');
+  const pd = document.getElementById('proofDoc');
+  const wr = document.getElementById('proofWrapper');
+  const aw = rp.clientWidth  - 16;
+  const ah = rp.clientHeight - 16;
+  proofScale = Math.min(aw / tmplNatW, ah / tmplNatH);
+  pd.style.transform = `scale(${proofScale})`;
+  pd.style.width  = tmplNatW + 'px';
+  pd.style.height = tmplNatH + 'px';
+  wr.style.width  = (tmplNatW * proofScale) + 'px';
+  wr.style.height = (tmplNatH * proofScale) + 'px';
+}
+
+/* ── Vendor PDF drop zone ─────────────────────────────── */
+function initVendorDrop() {
+  const uz = document.getElementById('upzone');
+  const pa = document.getElementById('pdfarea');
+  [uz, pa].forEach(el => {
+    el.addEventListener('dragenter', e => { e.preventDefault(); uz.classList.add('drag'); });
+    el.addEventListener('dragover',  e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    el.addEventListener('dragleave', e => { if (!pa.contains(e.relatedTarget)) uz.classList.remove('drag'); });
+    el.addEventListener('drop', e => {
+      e.preventDefault(); uz.classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f && f.type === 'application/pdf') loadVendorFile(f);
+      else toast('Please drop a PDF file', 'e');
+    });
+  });
+  uz.addEventListener('click', e => {
+    if (!['BUTTON','LABEL','INPUT'].includes(e.target.tagName))
+      document.getElementById('vendorFile').click();
+  });
+}
+
+function loadVendor(inp) { const f = inp.files[0]; if (f) loadVendorFile(f); inp.value = ''; }
+
+async function loadVendorFile(file) {
+  try {
+    const buf = await file.arrayBuffer();
+    vendorPDF = await pdfjsLib.getDocument({ data: buf }).promise;
+    vendorPages = vendorPDF.numPages; vendorPage = 1;
+    document.getElementById('upzone').style.display = 'none';
+    document.getElementById('cwrap').style.display = 'inline-block';
+    document.getElementById('lctrl').style.display = 'flex';
+    await recalcVendorFit();
+    vendorScale = vendorFitScale;
+    await renderVendor();
+    updatePgUI();
+    setHint('Enable Crop Mode — drag a rectangle, then Paste to Proof →');
+    toast(`"${file.name}" loaded`, 's');
+  } catch (err) {
+    console.error(err);
+    toast('Could not load PDF', 'e');
+  }
+}
+
+async function recalcVendorFit() {
+  const page = await vendorPDF.getPage(vendorPage);
+  const vp1  = page.getViewport({ scale: 1 });
+  const pa   = document.getElementById('pdfarea');
+  const aw   = pa.clientWidth  - 20;
+  const ah   = pa.clientHeight - 20;
+  vendorFitScale = Math.min(aw / vp1.width, ah / vp1.height);
+}
+
+async function renderVendor() {
+  const page = await vendorPDF.getPage(vendorPage);
+  const vp   = page.getViewport({ scale: vendorScale });
+  const vc   = document.getElementById('vendorCanvas');
+  const sc   = document.getElementById('selCanvas');
+  vc.width = sc.width = vp.width;
+  vc.height = sc.height = vp.height;
+  await page.render({ canvasContext: vc.getContext('2d'), viewport: vp }).promise;
+  clearSel(); hasSel = false;
+  document.getElementById('pasteBtn').disabled = true;
+}
+
+function gotoPage(d) {
+  const np = vendorPage + d;
+  if (np < 1 || np > vendorPages) return;
+  vendorPage = np; renderVendor(); updatePgUI();
+}
+function updatePgUI() {
+  document.getElementById('pgi').textContent = `${vendorPage}/${vendorPages}`;
+  document.getElementById('prevBtn').disabled = vendorPage <= 1;
+  document.getElementById('nextBtn').disabled = vendorPage >= vendorPages;
+}
+async function doZoom(d) {
+  if (!vendorPDF) return;
+  vendorScale = Math.max(.3, Math.min(4, vendorScale + d));
+  document.getElementById('zd').textContent = Math.round(vendorScale / vendorFitScale * 100) + '%';
+  await renderVendor();
+}
+
+/* ── Crop events ─────────────────────────────────────── */
+function initCropEvents() {
+  const cw = document.getElementById('cwrap');
+  cw.addEventListener('mousedown', cropMD);
+  cw.addEventListener('mousemove', cropMM);
+  cw.addEventListener('mouseup',   cropMU);
+  cw.addEventListener('mouseleave',cropMU);
+}
+
+function toggleCrop() {
+  if (!vendorPDF) { toast('Upload a vendor PDF first', 'e'); return; }
+  cropOn = !cropOn;
+  document.getElementById('cropBtn').textContent = '✂ Crop Mode: ' + (cropOn ? 'ON' : 'OFF');
+  document.getElementById('cropBtn').className = 'bbtn ' + (cropOn ? 'on' : 'off');
+  document.getElementById('cwrap').className = 'cwrap' + (cropOn ? ' con' : '');
+  if (!cropOn) { clearSel(); hasSel = false; document.getElementById('pasteBtn').disabled = true; }
+  setHint(cropOn ? 'Drag a rectangle on the vendor PDF to select artwork' : 'Crop mode off');
+}
+
+function vendorPos(e) {
+  const vc = document.getElementById('vendorCanvas');
+  const r  = vc.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left) * (vc.width  / r.width),
+    y: (e.clientY - r.top)  * (vc.height / r.height)
+  };
+}
+
+function cropMD(e) {
+  if (!cropOn || !vendorPDF) return;
+  e.preventDefault(); dragging = true; hasSel = false;
+  const p = vendorPos(e); sx = ex = p.x; sy = ey = p.y;
+  document.getElementById('pasteBtn').disabled = true;
+}
+function cropMM(e) {
+  if (!dragging || !cropOn) return;
+  e.preventDefault();
+  const p = vendorPos(e); ex = p.x; ey = p.y;
+  drawSel();
+}
+function cropMU(e) {
+  if (!dragging) return; dragging = false; if (!cropOn) return;
+  const w = Math.abs(ex - sx), h = Math.abs(ey - sy);
+  if (w > 15 && h > 15) {
+    hasSel = true;
+    document.getElementById('pasteBtn').disabled = false;
+    setHint('Selection ready — click Paste to Proof →');
+  } else { clearSel(); }
+}
+
+function drawSel() {
+  const sc  = document.getElementById('selCanvas');
+  const ctx = sc.getContext('2d');
+  ctx.clearRect(0, 0, sc.width, sc.height);
+  ctx.fillStyle = 'rgba(0,0,0,.45)';
+  ctx.fillRect(0, 0, sc.width, sc.height);
+  const rx = Math.min(sx, ex), ry = Math.min(sy, ey);
+  const rw = Math.abs(ex - sx), rh = Math.abs(ey - sy);
+  ctx.clearRect(rx, ry, rw, rh);
+  ctx.strokeStyle = '#5db535'; ctx.lineWidth = 2.5;
+  ctx.strokeRect(rx, ry, rw, rh);
+  ctx.fillStyle = '#5db535';
+  [[rx,ry],[rx+rw,ry],[rx,ry+rh],[rx+rw,ry+rh]].forEach(([cx,cy]) => ctx.fillRect(cx-5,cy-5,10,10));
+  const lbl = `${Math.round(rw)} × ${Math.round(rh)}`;
+  ctx.font = 'bold 12px monospace';
+  const tw = ctx.measureText(lbl).width + 10;
+  ctx.fillStyle = 'rgba(0,0,0,.75)';
+  ctx.fillRect(rx, ry > 24 ? ry - 24 : ry + rh + 2, tw, 19);
+  ctx.fillStyle = '#5db535';
+  ctx.fillText(lbl, rx + 5, ry > 24 ? ry - 8 : ry + rh + 16);
+}
+function clearSel() {
+  document.getElementById('selCanvas').getContext('2d').clearRect(0, 0, 99999, 99999);
+}
+
+/* ── HIGH-RES PASTE ──────────────────────────────────────
+   Re-renders the vendor page at 4× fit scale so crops stay
+   crisp even when enlarged significantly on the proof.      */
+async function doPaste() {
+  if (!hasSel) return;
+
+  const vc = document.getElementById('vendorCanvas');
+  // Convert selection to fractional page coordinates
+  const fx = Math.min(sx, ex) / vc.width;
+  const fy = Math.min(sy, ey) / vc.height;
+  const fw = Math.abs(ex - sx) / vc.width;
+  const fh = Math.abs(ey - sy) / vc.height;
+
+  // Render vendor page at 4× fit scale
+  const hiScale = vendorFitScale * 4;
+  const page    = await vendorPDF.getPage(vendorPage);
+  const hiVP    = page.getViewport({ scale: hiScale });
+  const hiC     = document.createElement('canvas');
+  hiC.width     = hiVP.width;
+  hiC.height    = hiVP.height;
+  await page.render({ canvasContext: hiC.getContext('2d'), viewport: hiVP }).promise;
+
+  // Extract crop region
+  const cx = Math.round(fx * hiVP.width);
+  const cy = Math.round(fy * hiVP.height);
+  const cw = Math.round(fw * hiVP.width);
+  const ch = Math.round(fh * hiVP.height);
+  const tmp = document.createElement('canvas');
+  tmp.width = cw; tmp.height = ch;
+  tmp.getContext('2d').drawImage(hiC, cx, cy, cw, ch, 0, 0, cw, ch);
+  const url = tmp.toDataURL('image/png');
+
+  // Initial display size — divide by 4 to match screen scale, then fit to artArea
+  const pl  = document.getElementById('pasteLayer');
+  const plW = pl.offsetWidth;
+  const plH = pl.offsetHeight;
+  let iw = cw / 4, ih = ch / 4;
+  const ratio = iw / ih;
+  const maxW = plW * 0.88, maxH = plH * 0.85;
+  if (iw > maxW) { iw = maxW; ih = iw / ratio; }
+  if (ih > maxH) { ih = maxH; iw = ih * ratio; }
+  iw = Math.round(iw); ih = Math.round(ih);
+
+  document.getElementById('artPh').style.display = 'none';
+
+  const div = document.createElement('div');
+  div.className = 'pimg';
+  div.style.cssText = `left:${Math.round((plW - iw) / 2)}px;top:${Math.round((plH - ih) / 2)}px;width:${iw}px;height:${ih}px`;
+  div.innerHTML =
+    `<img src="${url}" draggable="false">` +
+    `<div class="border"></div>` +
+    `<button class="prm" onclick="rmImg(this)">✕</button>` +
+    `<div class="rh nw" data-h="nw"></div><div class="rh n" data-h="n"></div>` +
+    `<div class="rh ne" data-h="ne"></div><div class="rh e" data-h="e"></div>` +
+    `<div class="rh se" data-h="se"></div><div class="rh s" data-h="s"></div>` +
+    `<div class="rh sw" data-h="sw"></div><div class="rh w" data-h="w"></div>`;
+
+  div.addEventListener('mousedown', startMove);
+  div.querySelectorAll('.rh').forEach(h => h.addEventListener('mousedown', startResize));
+  pl.appendChild(div);
+
+  clearSel(); hasSel = false;
+  document.getElementById('pasteBtn').disabled = true;
+  setHint('Pasted at 4× resolution — drag to move, handles to resize. Paste more or export.');
+  toast('Pasted! High-res crop ready.', 's');
+}
+
+function rmImg(btn) {
+  btn.parentElement.remove();
+  if (!document.getElementById('pasteLayer').querySelector('.pimg'))
+    document.getElementById('artPh').style.display = 'flex';
+}
+
+/* ── Drag / Resize ───────────────────────────────────── */
+function startMove(e) {
+  if (e.target.classList.contains('rh') || e.target.classList.contains('prm')) return;
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll('.pimg').forEach(p => p.classList.remove('sel'));
+  this.classList.add('sel');
+  dragState = { type: 'move', el: this, startX: e.clientX, startY: e.clientY,
+    origL: parseInt(this.style.left) || 0, origT: parseInt(this.style.top) || 0 };
+}
+function startResize(e) {
+  e.preventDefault(); e.stopPropagation();
+  const el = this.closest('.pimg');
+  document.querySelectorAll('.pimg').forEach(p => p.classList.remove('sel'));
+  el.classList.add('sel');
+  dragState = { type: 'resize', el, handle: this.dataset.h,
+    startX: e.clientX, startY: e.clientY,
+    origL: parseInt(el.style.left) || 0, origT: parseInt(el.style.top) || 0,
+    origW: el.offsetWidth, origH: el.offsetHeight };
+}
+document.addEventListener('mousemove', e => {
+  if (!dragState) return;
+  const dx = (e.clientX - dragState.startX) / proofScale;
+  const dy = (e.clientY - dragState.startY) / proofScale;
+  const el = dragState.el, min = 30;
+  const pl = document.getElementById('pasteLayer');
+  if (dragState.type === 'move') {
+    el.style.left = Math.max(0, Math.min(pl.offsetWidth  - el.offsetWidth,  dragState.origL + dx)) + 'px';
+    el.style.top  = Math.max(0, Math.min(pl.offsetHeight - el.offsetHeight, dragState.origT + dy)) + 'px';
+  } else {
+    const h = dragState.handle;
+    const { origL: l, origT: t, origW: w, origH: hh } = dragState;
+    if (h.includes('e')) { el.style.width  = Math.max(min, w + dx)  + 'px'; }
+    if (h.includes('s')) { el.style.height = Math.max(min, hh + dy) + 'px'; }
+    if (h.includes('w')) { const nw = Math.max(min, w - dx);  el.style.width = nw + 'px'; el.style.left = (l + w - nw) + 'px'; }
+    if (h.includes('n')) { const nh = Math.max(min, hh - dy); el.style.height = nh + 'px'; el.style.top  = (t + hh - nh) + 'px'; }
+  }
+});
+document.addEventListener('mouseup', () => { dragState = null; });
+document.addEventListener('mousedown', e => {
+  if (!e.target.closest('.pimg')) document.querySelectorAll('.pimg').forEach(p => p.classList.remove('sel'));
+});
+
+/* ── Export PDF ──────────────────────────────────────────
+   Draws template canvas + all pasted images onto one
+   offscreen canvas — no html2canvas, pure canvas API,
+   pixel-perfect and full resolution.                       */
+async function doExport() {
+  const pasted = document.getElementById('pasteLayer').querySelectorAll('.pimg');
+  if (!pasted.length) { toast('Paste at least one crop before exporting', 'e'); return; }
+  toast('Generating PDF…', 'i');
+
+  try {
+    // Output canvas = template natural size
+    const out = document.createElement('canvas');
+    out.width  = tmplNatW;
+    out.height = tmplNatH;
+    const ctx  = out.getContext('2d');
+
+    // Draw template
+    ctx.drawImage(document.getElementById('templateCanvas'), 0, 0);
+
+    // Draw each pasted image at full proof-space coordinates
+    // pasteLayer coords are in proofDoc-space (tmplNatW × tmplNatH)
+    pasted.forEach(div => {
+      const img = div.querySelector('img');
+      const x = (parseInt(div.style.left) || 0);
+      const y = (parseInt(div.style.top)  || 0);
+      const w = div.offsetWidth;
+      const h = div.offsetHeight;
+      ctx.drawImage(img, x, y, w, h);
+    });
+
+    // Convert to PDF
+    const imgData = out.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+    const pw  = pdf.internal.pageSize.getWidth();
+    const ph  = pdf.internal.pageSize.getHeight();
+    const imgH = pw * (out.height / out.width);
+
+    if (imgH <= ph) {
+      pdf.addImage(imgData, 'JPEG', 0, 0, pw, imgH);
+    } else {
+      // Tall template — split into pages
+      const pxPP = (ph / pw) * out.width;
+      let yo = 0, first = true;
+      while (yo < out.height) {
+        const ch = Math.min(pxPP, out.height - yo);
+        const t  = document.createElement('canvas');
+        t.width = out.width; t.height = ch;
+        t.getContext('2d').drawImage(out, 0, yo, out.width, ch, 0, 0, out.width, ch);
+        if (!first) pdf.addPage();
+        pdf.addImage(t.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pw, ch * (ph / pxPP));
+        yo += ch; first = false;
+      }
+    }
+
+    pdf.save('Promotional Source Proof.pdf');
+    toast('✓ Exported: Promotional Source Proof.pdf', 's');
+  } catch (err) {
+    console.error(err);
+    toast('Export failed — please try again', 'e');
+  }
+}
+
+/* ── Helpers ─────────────────────────────────────────── */
+function setHint(t) { document.getElementById('hint').textContent = t; }
+let _tt;
+function toast(msg, t = 'i') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show ' + t;
+  clearTimeout(_tt); _tt = setTimeout(() => el.className = '', 3500);
+}
+</script>
+</body>
+</html>
