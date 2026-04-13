@@ -3,1475 +3,838 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MerchVirtual</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<title>MerchProof — Promotional Source</title>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0a0a0a;--s1:#131313;--s2:#1a1a1a;--s3:#222;--s4:#2e2e2e;
-  --bd:#252525;--ac:#6CC24A;--gn:#3ecf8e;--rd:#e8522a;--tx:#ede9e3;--mu:#5a5a5a;
-  --ac2:rgba(108,194,74,.12);
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;background:#1a1a1a;color:#e0e0e0}
+
+/* ─── LOGIN ─── */
+#loginScreen{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:#1a1a1a}
+.lcard{background:#222;border:1px solid #333;border-radius:14px;padding:42px 38px;width:340px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.7)}
+.ltitle{font-size:26px;font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:4px}
+.ltitle em{color:#5db535;font-style:normal}
+.lsub{font-size:12px;color:#555;margin-bottom:26px}
+.linput{width:100%;padding:11px 14px;background:#2a2a2a;border:1.5px solid #3a3a3a;border-radius:8px;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:6px;transition:border-color .2s}
+.linput:focus{border-color:#5db535}
+.lerr{font-size:12px;color:#e53e3e;height:18px;margin-bottom:8px;text-align:left}
+.lbtn{width:100%;padding:12px;background:#5db535;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s}
+.lbtn:hover{background:#4a9a29}
+.lfoot{margin-top:18px;font-size:11px;color:#444}
+
+/* ─── SETUP SCREEN (first run — upload template) ─── */
+#setupScreen{position:fixed;inset:0;z-index:998;display:none;align-items:center;justify-content:center;background:#1a1a1a}
+.scard{background:#222;border:1px solid #333;border-radius:14px;padding:42px 38px;width:480px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.7)}
+.scard h2{font-size:20px;font-weight:700;color:#fff;margin-bottom:8px}
+.scard p{font-size:13px;color:#666;margin-bottom:28px;line-height:1.6}
+.setup-zone{border:2px dashed #3a3a3a;border-radius:10px;padding:36px 20px;margin-bottom:20px;cursor:pointer;transition:all .2s;background:#1e1e1e}
+.setup-zone:hover,.setup-zone.drag{border-color:#5db535;background:rgba(93,181,53,.05)}
+.setup-zone-ico{font-size:38px;margin-bottom:10px;opacity:.5}
+.setup-zone-t{font-size:14px;font-weight:600;color:#777;margin-bottom:5px}
+.setup-zone-s{font-size:12px;color:#444}
+.setup-browse{display:inline-block;margin-top:12px;padding:9px 22px;background:#5db535;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.setup-note{font-size:11px;color:#3a3a3a;margin-top:14px;line-height:1.6}
+
+/* ─── APP ─── */
+#app{display:none;flex-direction:column;height:100vh}
+
+/* TOP BAR */
+.bar{height:44px;background:#222;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0}
+.logo{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.5px;white-space:nowrap}
+.logo em{color:#5db535;font-style:normal}
+.bsep{width:1px;height:22px;background:#2a2a2a}
+.bbtn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border:none;white-space:nowrap;transition:all .15s}
+.bbtn.off{background:#2a2a2a;color:#777;border:1px solid #333}.bbtn.off:hover{background:#333;color:#bbb}
+.bbtn.on{background:rgba(93,181,53,.15);color:#5db535;border:1px solid #5db535}
+.bbtn.paste{background:#dd6b20;color:#fff}.bbtn.paste:hover{background:#b85515}
+.bbtn.paste:disabled{background:#2a2a2a;color:#3a3a3a;cursor:default}
+.bbtn.export{background:#5db535;color:#fff}.bbtn.export:hover{background:#4a9a29}
+.hint{font-size:11px;color:#4a4a4a;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
+.sp{flex:1}
+.tbsm{padding:4px 10px;background:transparent;border:1px solid #2a2a2a;border-radius:5px;color:#444;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.tbsm:hover{border-color:#444;color:#888}
+
+/* ─── PANELS ─── */
+.panels{display:flex;flex:1;overflow:hidden}
+
+/* LEFT: Vendor PDF */
+.lpanel{width:50%;background:#111;border-right:2px solid #222;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.pdfarea{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;background:#111}
+
+/* Drop / upload zone */
+.upzone{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#3a3a3a;text-align:center;cursor:pointer;transition:background .2s}
+.upzone.drag{background:rgba(93,181,53,.05);outline:2px dashed #5db535;outline-offset:-4px}
+.up-ico{font-size:42px;opacity:.3}
+.up-t{font-size:14px;font-weight:600;color:#4a4a4a}
+.up-s{font-size:12px;color:#333;line-height:1.7}
+.up-btn{padding:8px 20px;background:#5db535;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+
+/* Canvas wrap — crop events attached here */
+.cwrap{position:relative;display:inline-block;line-height:0}
+.cwrap.con{cursor:crosshair}
+#vendorCanvas{display:block;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+#selCanvas{position:absolute;top:0;left:0;pointer-events:none;z-index:5}
+
+/* Bottom controls */
+.lctrl{height:38px;background:#181818;border-top:1px solid #222;display:flex;align-items:center;padding:0 8px;gap:5px;flex-shrink:0}
+.uplbl2{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;background:#222;border:1px solid #2a2a2a;border-radius:4px;color:#666;font-size:11px;cursor:pointer;white-space:nowrap}.uplbl2:hover{background:#2a2a2a;color:#aaa}
+.nb{padding:3px 7px;background:#222;border:1px solid #222;border-radius:3px;color:#555;font-size:11px;cursor:pointer;font-family:inherit}.nb:hover{background:#2a2a2a;color:#aaa}.nb:disabled{opacity:.25;cursor:default}
+.pgi{font-size:11px;color:#3a3a3a;font-family:monospace}
+.zg{display:flex;align-items:center;gap:2px;margin-left:auto}
+.zb{width:22px;height:22px;background:#222;border:none;border-radius:3px;color:#555;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}.zb:hover{background:#2a2a2a;color:#aaa}
+.zd{font-size:10px;color:#3a3a3a;width:36px;text-align:center;font-family:monospace}
+
+/* RIGHT: PS Template */
+.rpanel{flex:1;background:#777;display:flex;align-items:flex-start;justify-content:center;overflow:hidden;padding:8px}
+#proofWrapper{flex-shrink:0;position:relative}
+
+/* proofDoc holds: template canvas + paste overlay */
+#proofDoc{
+  position:relative;
+  transform-origin:top left;
+  line-height:0; /* removes gap under canvas */
+  box-shadow:0 6px 30px rgba(0,0,0,.5);
 }
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px}
+#templateCanvas{display:block}
 
-/* ── LOGIN ── */
-#login-screen{
-  position:fixed;inset:0;background:var(--bg);
-  display:flex;align-items:center;justify-content:center;z-index:9999;
-  background-image:radial-gradient(ellipse at 60% 40%, rgba(108,194,74,.06) 0%, transparent 60%);
+/* Paste overlay — sits pixel-perfect over the template canvas */
+#pasteLayer{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  overflow:hidden;
+  pointer-events:none; /* enabled only when not exporting */
 }
-.login-wrap{width:360px;}
-.login-logo{
-  font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:5px;
-  margin-bottom:2px;text-align:center;
-}
-.login-logo .mv{color:var(--ac);}
-.login-logo .vt{color:var(--tx);}
-.login-tagline{font-size:10px;color:var(--mu);text-align:center;letter-spacing:2px;text-transform:uppercase;margin-bottom:32px;}
-.login-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:28px;}
-.lf{margin-bottom:14px;}
-.lf label{font-size:10px;color:var(--mu);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px;}
-.lf input{
-  width:100%;background:var(--s2);border:1px solid var(--bd);color:var(--tx);
-  border-radius:7px;padding:10px 12px;font-size:13px;font-family:inherit;transition:border-color .15s;
-}
-.lf input:focus{outline:none;border-color:var(--ac);}
-.login-err{font-size:11px;color:var(--rd);min-height:18px;margin-bottom:10px;text-align:center;}
-.login-btn{
-  width:100%;background:var(--ac);color:#0a0a0a;border:none;border-radius:8px;
-  padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
-  letter-spacing:.5px;transition:opacity .15s,transform .1s;
-}
-.login-btn:hover{opacity:.88;}
-.login-btn:active{transform:scale(.98);}
-.login-ps{font-size:10px;color:var(--mu);text-align:center;margin-top:18px;letter-spacing:.3px;}
+#pasteLayer.active{pointer-events:auto}
 
-/* ── APP SHELL ── */
-#app-screen{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
-header{
-  flex-shrink:0;height:52px;background:var(--s1);border-bottom:1px solid var(--bd);
-  display:flex;align-items:center;padding:0 14px;gap:10px;
-}
-.brand{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:3px;}
-.brand .mv{color:var(--ac);}
-.brand .vt{color:var(--tx);}
-.hdiv{width:1px;height:18px;background:var(--bd);}
-.huser{font-size:11px;color:var(--mu);}
-.hright{margin-left:auto;display:flex;align-items:center;gap:5px;}
-
-/* ── BUTTONS ── */
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:4px;
-  border:none;border-radius:6px;padding:6px 12px;font-size:12px;
-  font-family:inherit;font-weight:500;cursor:pointer;
-  transition:opacity .15s,transform .1s;white-space:nowrap;
-}
-.btn:hover{opacity:.84;}.btn:active{transform:scale(.97);}
-.btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important;}
-.ba{background:var(--ac);color:#0a0a0a;font-weight:700;}
-.bh{background:var(--s2);color:var(--tx);border:1px solid var(--bd);}
-.brd{background:rgba(232,82,42,.1);color:var(--rd);border:1px solid rgba(232,82,42,.25);}
-.bgn{background:rgba(62,207,142,.1);color:var(--gn);border:1px solid rgba(62,207,142,.25);}
-.bfull{width:100%;}.bxs{padding:3px 8px;font-size:11px;}.bsm{padding:5px 11px;}
-
-/* ── LAYOUT ── */
-.app{flex:1;display:flex;overflow:hidden;}
-.side{
-  width:272px;flex-shrink:0;background:var(--s1);
-  border-right:1px solid var(--bd);overflow-y:auto;
-}
-.stage{
-  flex:1;overflow:auto;background:#080808;
-  display:flex;align-items:flex-start;justify-content:flex-start;padding:24px;
-}
-.stage.eyedrop-mode,.stage.eyedrop-mode *{cursor:crosshair!important;}
-
-/* ── PANELS ── */
-.panel{padding:11px 13px;border-bottom:1px solid var(--bd);}
-.ptitle{
-  font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);
-  margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;
+.artph{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:rgba(0,0,0,.18);font-size:14px;pointer-events:none;text-align:center;
+  font-family:Arial;line-height:1.6;
 }
 
-/* ── FIELDS ── */
-.field{display:flex;flex-direction:column;gap:3px;margin-bottom:6px;}
-.field label{font-size:10px;color:var(--mu);display:flex;justify-content:space-between;}
-.field input,.field select{
-  background:var(--s2);border:1px solid var(--bd);color:var(--tx);
-  border-radius:5px;padding:5px 7px;font-size:12px;font-family:inherit;width:100%;
-}
-.field input:focus,.field select:focus{outline:none;border-color:var(--ac);}
-.field input[type=range]{padding:2px 0;accent-color:var(--ac);}
-.r2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-hr{border:none;border-top:1px solid var(--bd);margin:6px 0;}
+/* Pasted image elements */
+.pimg{position:absolute;cursor:move;user-select:none}
+.pimg img{display:block;width:100%;height:100%;pointer-events:none}
+.pimg .border{position:absolute;inset:0;outline:1.5px dashed transparent;pointer-events:none;z-index:2}
+.pimg:hover .border,.pimg.sel .border{outline-color:rgba(93,181,53,.8)}
+.prm{position:absolute;top:-10px;right:-10px;width:22px;height:22px;background:#e53e3e;color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:12px;display:none;align-items:center;justify-content:center;z-index:10;line-height:1;padding:0;font-family:Arial}
+.pimg:hover .prm,.pimg.sel .prm{display:flex}
+/* 8 resize handles */
+.rh{position:absolute;width:12px;height:12px;background:#5db535;border:2px solid #fff;border-radius:2px;z-index:10;display:none}
+.pimg:hover .rh,.pimg.sel .rh{display:block}
+.rh.nw{top:-6px;left:-6px;cursor:nw-resize}.rh.n{top:-6px;left:calc(50% - 6px);cursor:n-resize}
+.rh.ne{top:-6px;right:-6px;cursor:ne-resize}.rh.e{top:calc(50% - 6px);right:-6px;cursor:e-resize}
+.rh.se{bottom:-6px;right:-6px;cursor:se-resize}.rh.s{bottom:-6px;left:calc(50% - 6px);cursor:s-resize}
+.rh.sw{bottom:-6px;left:-6px;cursor:sw-resize}.rh.w{top:calc(50% - 6px);left:-6px;cursor:w-resize}
 
-/* ── CANVAS ── */
-.couter{position:relative;flex-shrink:0;}
-.cscale{transform-origin:top left;position:relative;}
-#cv{
-  position:relative;overflow:hidden;
-  box-shadow:0 0 0 1px var(--bd),0 20px 60px rgba(0,0,0,.8);
-  background:#fff;
-}
+/* ─── SETTINGS MODAL ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:800;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#222;border:1px solid #333;border-radius:13px;padding:30px;width:360px;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.modal h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:6px}
+.modal p{font-size:12px;color:#555;margin-bottom:20px;line-height:1.5}
+.modal label{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px}
+.modal input{width:100%;padding:10px 12px;background:#1e1e1e;border:1.5px solid #333;border-radius:7px;color:#fff;font-size:14px;font-family:inherit;margin-bottom:12px;outline:none;transition:border-color .15s}
+.modal input:focus{border-color:#5db535}
+.merr{font-size:12px;color:#fc8181;min-height:16px;margin-bottom:8px}
+.mrow{display:flex;gap:10px}
+.mbtn{flex:1;padding:10px;border:none;border-radius:7px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer}
+.mbtn.p{background:#5db535;color:#fff}.mbtn.p:hover{background:#4a9a29}
+.mbtn.s{background:#2a2a2a;color:#777}.mbtn.s:hover{background:#333}
 
-/* ── ITEMS ── */
-.ci{position:absolute;cursor:move;user-select:none;transform-origin:center center;}
-.ci img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;}
-.ci .ring{position:absolute;inset:-2px;border:2px solid var(--gn);border-radius:3px;display:none;pointer-events:none;}
-.ci.sel .ring{display:block;}
-.ci .rh{position:absolute;width:10px;height:10px;background:var(--gn);border-radius:2px;pointer-events:all;display:none;}
-.ci.sel .rh{display:block;}
-.ci .rh.br{bottom:-5px;right:-5px;cursor:se-resize;}
-.ci .rh.bl{bottom:-5px;left:-5px;cursor:sw-resize;}
-.ci .rh.tr{top:-5px;right:-5px;cursor:ne-resize;}
-.ci .rh.tl{top:-5px;left:-5px;cursor:nw-resize;}
-.ci .rline{position:absolute;top:-22px;left:50%;transform:translateX(-50%);width:1px;height:18px;background:rgba(62,207,142,.4);pointer-events:none;display:none;}
-.ci.sel .rline{display:block;}
-.ci .roth{position:absolute;top:-34px;left:50%;transform:translateX(-50%);width:18px;height:18px;background:var(--gn);border-radius:50%;cursor:grab;display:none;align-items:center;justify-content:center;font-size:11px;pointer-events:all;}
-.ci.sel .roth{display:flex;}
-.ci .dh{position:absolute;top:-10px;right:-10px;width:18px;height:18px;background:var(--rd);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:12px;color:#fff;cursor:pointer;pointer-events:all;font-weight:bold;}
-.ci.sel .dh{display:flex;}
-
-/* ── LOGO THUMBS ── */
-.tg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px;}
-.th{aspect-ratio:1;border-radius:6px;overflow:hidden;background:var(--s3);border:1.5px solid var(--bd);cursor:pointer;position:relative;transition:border-color .15s;}
-.th:hover{border-color:var(--ac);}
-.th img{width:100%;height:100%;object-fit:contain;padding:4px;display:block;pointer-events:none;}
-.th .rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.85);color:#fff;border:none;border-radius:50%;width:14px;height:14px;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center;}
-.th:hover .rm{display:flex;}
-
-/* ── UPLOAD BOX ── */
-.ubox{border:1.5px dashed var(--bd);border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;background:var(--s2);position:relative;transition:border-color .2s;margin-bottom:6px;}
-.ubox:hover{border-color:var(--ac);}
-.ubox input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.ubox .ui{font-size:20px;margin-bottom:2px;}
-.ubox strong{font-size:12px;display:block;}
-.ubox small{font-size:10px;color:var(--mu);}
-
-/* ── EFFECTS ── */
-.fx-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px;}
-.fx-btn{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;padding:9px 4px;border-radius:8px;border:1.5px solid var(--bd);
-  background:var(--s2);cursor:pointer;font-size:10px;color:var(--mu);
-  transition:all .15s;font-family:inherit;
-}
-.fx-btn:hover{border-color:var(--ac);color:var(--tx);}
-.fx-btn.active{border-color:var(--ac);background:var(--ac2);color:var(--ac);}
-.fx-btn .fx-ico{font-size:17px;line-height:1;}
-.sub-panel{
-  background:var(--s2);border:1px solid var(--bd);border-radius:9px;
-  padding:10px;margin-bottom:8px;
-}
-.sub-panel-title{font-size:10px;font-weight:600;color:var(--gn);margin-bottom:7px;}
-.tone-swatch-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-.tone-swatch{width:28px;height:28px;border-radius:6px;border:2px solid var(--bd);flex-shrink:0;}
-.tone-hex{font-size:11px;color:var(--mu);font-family:'Courier New',monospace;}
-
-/* ── PRESET BUTTONS ── */
-.preset-row{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
-
-/* ── INFO ── */
-.info{font-size:10px;color:var(--mu);line-height:1.6;padding:6px 8px;background:var(--s2);border-radius:5px;border:1px solid var(--bd);}
-
-/* ── ZOOM ROW ── */
-.zrow{display:flex;gap:3px;align-items:center;}
-.zrow button{background:var(--s2);border:1px solid var(--bd);color:var(--tx);border-radius:4px;width:22px;height:22px;cursor:pointer;font-size:13px;line-height:1;}
-.zlbl{font-size:11px;color:var(--mu);min-width:34px;text-align:center;}
-
-/* ── MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:center;justify-content:center;}
-.modal-box{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:24px;max-width:580px;width:95%;max-height:85vh;overflow-y:auto;}
-.modal-title{font-size:15px;font-weight:700;margin-bottom:3px;}
-.modal-sub{font-size:11px;color:var(--mu);margin-bottom:16px;}
-.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;}
-.lib-card{border-radius:8px;border:1.5px solid var(--bd);background:var(--s2);cursor:pointer;overflow:hidden;position:relative;transition:border-color .15s;}
-.lib-card:hover{border-color:var(--ac);}
-.lib-card img{width:100%;aspect-ratio:1;object-fit:contain;padding:8px;display:block;}
-.lib-card .lname{font-size:9px;color:var(--mu);text-align:center;padding:4px;border-top:1px solid var(--bd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.lib-card .ldel{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.85);color:var(--rd);border:none;border-radius:50%;width:16px;height:16px;font-size:10px;cursor:pointer;display:none;align-items:center;justify-content:center;}
-.lib-card:hover .ldel{display:flex;}
-
-/* ── SAVE ROW ── */
-.save-row{display:flex;gap:6px;align-items:center;}
-.save-row input{flex:1;background:var(--s2);border:1px solid var(--bd);color:var(--tx);border-radius:5px;padding:5px 8px;font-size:12px;font-family:inherit;}
-.save-row input:focus{outline:none;border-color:var(--ac);}
-
-/* ── TOAST ── */
-.toast{
-  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);
-  background:var(--s3);border:1px solid var(--bd);color:var(--tx);
-  padding:8px 18px;border-radius:8px;font-size:12px;z-index:99999;
-  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;
-}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-::-webkit-scrollbar{width:4px;height:4px;}
-::-webkit-scrollbar-thumb{background:var(--s4);border-radius:3px;}
+/* ─── TOAST ─── */
+#toast{position:fixed;bottom:16px;right:16px;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all .2s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.s{background:#276749;color:#9ae6b4;border:1px solid #38a169}
+#toast.e{background:#742a2a;color:#fed7d7;border:1px solid #c53030}
+#toast.i{background:#2d3748;color:#e2e8f0;border:1px solid #4a5568}
 </style>
 </head>
 <body>
 
-<div class="toast" id="toast"></div>
-
-<!-- ════════════════════════════════════════
-     LOGIN SCREEN
-════════════════════════════════════════ -->
-<div id="login-screen">
-  <div class="login-wrap">
-    <div class="login-logo"><span class="mv">MERCH</span><span class="vt">VIRTUAL</span></div>
-    <div class="login-tagline">Virtual Mockup Studio</div>
-    <div class="login-card">
-      <div class="lf">
-        <label>Username</label>
-        <input type="text" id="login-user" placeholder="Enter your username" autocomplete="username"
-               onkeydown="if(event.key==='Enter')tryLogin()">
-      </div>
-      <div class="lf">
-        <label>Password</label>
-        <input type="password" id="login-pass" placeholder="Enter your password" autocomplete="current-password"
-               onkeydown="if(event.key==='Enter')tryLogin()">
-      </div>
-      <div class="login-err" id="login-err"></div>
-      <button class="login-btn" onclick="tryLogin()">Sign In</button>
-    </div>
-    <div class="login-ps">Powered by Promotional Source</div>
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen">
+  <div class="lcard">
+    <div class="ltitle">MERCH<em>PROOF</em></div>
+    <div class="lsub">Promotional Source — CSR Tool</div>
+    <input class="linput" type="password" id="pwdIn" placeholder="Password"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="lerr" id="loginErr"></div>
+    <button class="lbtn" onclick="doLogin()">Sign In</button>
+    <div class="lfoot">Promotional Source Corporation — Internal Use Only</div>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     MAIN APP
-════════════════════════════════════════ -->
-<div id="app-screen" style="display:none;flex:1;flex-direction:column;height:100vh;overflow:hidden;">
-  <header>
-    <div class="brand"><span class="mv">MERCH</span><span class="vt">VIRTUAL</span></div>
-    <div class="hdiv"></div>
-    <span style="font-size:10px;color:rgba(255,255,255,.55);letter-spacing:.3px;">Powered by Promotional Source</span>
-    <div class="hdiv"></div>
-    <span class="huser" id="huser"></span>
-    <div class="hright">
-      <div class="zrow">
-        <button onclick="adjustZoom(-0.1)">−</button>
-        <span class="zlbl" id="zoomlbl">100%</span>
-        <button onclick="adjustZoom(0.1)">+</button>
-        <button class="btn bh bxs" onclick="fitZoom()">Fit</button>
-      </div>
-      <button class="btn bh bxs" onclick="clearAll()">Clear</button>
-      <button class="btn bh bxs" onclick="signOut()">Sign Out</button>
-      <button class="btn ba bsm" id="expbtn" onclick="exportPNG()">Export PNG</button>
+<!-- ══ FIRST-RUN SETUP (upload template) ══ -->
+<div id="setupScreen">
+  <div class="scard">
+    <h2>👓 Set Up Your Proof Template</h2>
+    <p>Upload your Promotional Source proof template PDF once.<br>
+       It will be saved to this browser and used automatically every session.</p>
+    <div class="setup-zone" id="setupZone">
+      <div class="setup-zone-ico">📄</div>
+      <div class="setup-zone-t">Drop your template PDF here</div>
+      <div class="setup-zone-s">or click Browse to select it</div>
+      <label class="setup-browse">Browse PDF
+        <input type="file" id="templateFile" accept=".pdf" style="display:none" onchange="loadTemplate(this)">
+      </label>
     </div>
-  </header>
+    <div class="setup-note">
+      Your template PDF is stored locally in this browser — it is never uploaded anywhere.<br>
+      To replace it later, use <strong>Settings → Replace Template</strong>.
+    </div>
+  </div>
+</div>
 
-  <div class="app">
-    <div class="side" id="sidebar">
+<!-- ══ APP ══ -->
+<div id="app">
+  <div class="bar">
+    <div class="logo">MERCH<em>PROOF</em></div>
+    <div class="bsep"></div>
+    <button class="bbtn off" id="cropBtn" onclick="toggleCrop()">✂ Crop Mode: OFF</button>
+    <button class="bbtn paste" id="pasteBtn" onclick="doPaste()" disabled>Paste to Proof →</button>
+    <span class="hint" id="hint">Upload a vendor PDF on the left to begin</span>
+    <div class="sp"></div>
+    <button class="bbtn export" onclick="doExport()">⬇ Export PDF</button>
+    <button class="tbsm" onclick="openSettings()">⚙ Settings</button>
+    <button class="tbsm" onclick="doLogout()">Sign Out</button>
+  </div>
 
-      <!-- Canvas Size -->
-      <div class="panel">
-        <div class="ptitle">Canvas Size</div>
-        <div class="preset-row">
-          <button class="btn bh bxs" onclick="setPreset(1024,1537)">1024×1537</button>
-          <button class="btn bh bxs" onclick="setPreset(1080,1080)">1080×1080</button>
-          <button class="btn bh bxs" onclick="setPreset(1200,628)">1200×628</button>
-          <button class="btn bh bxs" onclick="setPreset(1920,1080)">1920×1080</button>
-          <button class="btn bh bxs" onclick="setPreset(2354,600)">2354×600</button>
+  <div class="panels">
+
+    <!-- LEFT: Vendor PDF -->
+    <div class="lpanel">
+      <div class="pdfarea" id="pdfarea">
+        <div class="upzone" id="upzone">
+          <div class="up-ico">📋</div>
+          <div class="up-t">Drop vendor proof here</div>
+          <div class="up-s">Drag & drop or click to browse</div>
+          <label class="up-btn">Browse PDF
+            <input type="file" id="vendorFile" accept=".pdf" style="display:none" onchange="loadVendor(this)">
+          </label>
         </div>
-        <div class="r2">
-          <div class="field"><label>Width</label><input type="number" id="inp-w" value="1024" onchange="applyCanvasSize()"></div>
-          <div class="field"><label>Height</label><input type="number" id="inp-h" value="1537" onchange="applyCanvasSize()"></div>
+        <div class="cwrap" id="cwrap" style="display:none">
+          <canvas id="vendorCanvas"></canvas>
+          <canvas id="selCanvas"></canvas>
         </div>
       </div>
-
-      <!-- Product Photo -->
-      <div class="panel">
-        <div class="ptitle">Product Photo</div>
-        <div class="ubox">
-          <input type="file" accept="image/*" onchange="handleProduct(event)">
-          <div class="ui">📸</div>
-          <strong>Upload Product Photo</strong>
-          <small>Sets as canvas background</small>
-        </div>
-        <div id="photo-info" style="font-size:10px;color:var(--gn);text-align:center;min-height:14px;"></div>
-        <button class="btn bh bfull bxs" id="remove-logo-btn" onclick="activateLogoRemoval()" style="margin-top:4px;display:none;">🖌️ Remove Logo from Photo</button>
-        <div id="edit-controls" style="display:none;margin-top:6px;">
-          <div class="info" style="margin-bottom:6px;">Paint over the existing logo to remove it. Brush samples the surrounding fabric colour.</div>
-          <div class="field">
-            <label>Brush Size <span id="brush-sz-lbl">20px</span></label>
-            <input type="range" id="brush-sz" min="5" max="60" value="20" step="1"
-                   oninput="editBrushSize=+this.value;document.getElementById('brush-sz-lbl').textContent=this.value+'px'">
-          </div>
-          <div style="display:flex;gap:5px;">
-            <button class="btn ba bfull bxs" onclick="commitLogoRemoval()">✓ Done</button>
-            <button class="btn bh bfull bxs" onclick="cancelLogoRemoval()">✕ Cancel</button>
-          </div>
+      <div class="lctrl" id="lctrl" style="display:none">
+        <label class="uplbl2">📄 New PDF
+          <input type="file" id="vendorFile2" accept=".pdf" style="display:none" onchange="loadVendor(this)">
+        </label>
+        <button class="nb" id="prevBtn" onclick="gotoPage(-1)" disabled>◀</button>
+        <button class="nb" id="nextBtn" onclick="gotoPage(1)"  disabled>▶</button>
+        <span class="pgi" id="pgi">1/1</span>
+        <div class="zg">
+          <button class="zb" onclick="doZoom(-.15)">−</button>
+          <span class="zd" id="zd">Fit</span>
+          <button class="zb" onclick="doZoom(.15)">+</button>
         </div>
       </div>
+    </div>
 
-      <!-- Logos -->
-      <div class="panel">
-        <div class="ptitle">Logos
-          <div style="display:flex;gap:4px;">
-            <label class="btn bh bxs" style="cursor:pointer;">
-              + Upload
-              <input type="file" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
-            </label>
-            <button class="btn bh bxs" onclick="openLibrary()">📁 Library</button>
+    <!-- RIGHT: PS Template (rendered from uploaded PDF) -->
+    <div class="rpanel" id="rpanel">
+      <div id="proofWrapper">
+        <div id="proofDoc">
+          <canvas id="templateCanvas"></canvas>
+          <div id="pasteLayer" class="active">
+            <div class="artph" id="artPh">Paste cropped artwork here</div>
           </div>
-        </div>
-        <div class="tg" id="logothumbs"></div>
-        <div id="logo-empty" style="font-size:10px;color:var(--mu);padding:4px 0;">Upload a logo to get started.</div>
-      </div>
-
-      <!-- Effects (shown when logo selected) -->
-      <div class="panel" id="fx-panel" style="display:none;">
-        <div class="ptitle">Logo Effects</div>
-        <div class="fx-grid">
-          <button class="fx-btn" id="fx-white" onclick="applyColorEffect('white')">
-            <span class="fx-ico">⬜</span>White
-          </button>
-          <button class="fx-btn" id="fx-black" onclick="applyColorEffect('black')">
-            <span class="fx-ico">⬛</span>Black
-          </button>
-          <button class="fx-btn" id="fx-tone" onclick="toggleTonePanel()">
-            <span class="fx-ico">🎨</span>Tone on Tone
-          </button>
-          <button class="fx-btn" id="fx-emb" onclick="toggleEmbPanel()">
-            <span class="fx-ico">🧵</span>Embroidery
-          </button>
-        </div>
-        <button class="btn bh bfull bxs" onclick="resetEffect()" style="margin-bottom:6px;">↺ Reset to Original</button>
-
-        <!-- Tone on Tone sub-panel -->
-        <div class="sub-panel" id="tone-panel" style="display:none;">
-          <div class="sub-panel-title">🎨 Tone on Tone</div>
-          <div class="info" style="margin-bottom:8px;">Click the button below, then click anywhere on the product photo to sample its colour.</div>
-          <button class="btn bgn bfull bxs" id="eyedrop-btn" onclick="activateEyedropper()" style="margin-bottom:8px;">
-            💧 Pick Colour from Photo
-          </button>
-          <div class="tone-swatch-row">
-            <div class="tone-swatch" id="tone-swatch" style="background:#888;"></div>
-            <span class="tone-hex" id="tone-hex">#888888</span>
-            <span style="font-size:10px;color:var(--mu);margin-left:auto;" id="tone-label">No colour picked</span>
-          </div>
-          <div class="field">
-            <label>Adjust <span id="tone-val-lbl">−20%</span></label>
-            <input type="range" id="tone-slider" min="-80" max="80" value="-20" oninput="onToneSlider()">
-          </div>
-          <div style="display:flex;gap:6px;font-size:9px;color:var(--mu);margin-bottom:8px;justify-content:space-between;">
-            <span>← Darker</span><span>Lighter →</span>
-          </div>
-          <button class="btn ba bfull bxs" id="tone-apply-btn" onclick="commitTone()" disabled>Apply to Logo</button>
-        </div>
-
-        <!-- Embroidery sub-panel -->
-        <div class="sub-panel" id="emb-panel" style="display:none;">
-          <div class="sub-panel-title">🧵 AI Embroidery Preview</div>
-          <div class="info" style="margin-bottom:8px;">Uses AI to generate a realistic embroidered version of the logo. Takes 15–30 seconds.</div>
-          <div class="field">
-            <label>Stitch Style</label>
-            <select id="emb-style">
-              <option value="satin">Satin Stitch</option>
-              <option value="flat">Flat Stitch</option>
-              <option value="raised">Raised / 3D</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Show On Garment</label>
-            <select id="emb-garment">
-              <option value="none">Logo Only (White Fabric)</option>
-              <option value="polo">White Polo Shirt</option>
-              <option value="hat">Baseball Cap</option>
-              <option value="hoodie">Grey Hoodie</option>
-            </select>
-          </div>
-          <button class="btn ba bfull bxs" id="emb-gen-btn" onclick="liveEmbroidery()" style="margin-bottom:6px;">✨ Generate Embroidery</button>
-          <div style="font-size:10px;text-align:center;margin-top:4px;" id="emb-status"></div>
-        </div>
-      </div>
-
-      <!-- Selected Item -->
-      <div class="panel" id="sel-panel" style="display:none;">
-        <div class="ptitle"><span id="sel-title">Logo</span></div>
-        <div class="r2">
-          <div class="field"><label>X</label><input type="number" id="sel-x" oninput="applyField('x')"></div>
-          <div class="field"><label>Y</label><input type="number" id="sel-y" oninput="applyField('y')"></div>
-        </div>
-        <div class="r2">
-          <div class="field"><label>W</label><input type="number" id="sel-w" oninput="applyField('w')"></div>
-          <div class="field"><label>H</label><input type="number" id="sel-h" oninput="applyField('h')"></div>
-        </div>
-        <div class="field">
-          <label>Rotation <span id="sel-rotd">0°</span></label>
-          <input type="range" id="sel-rot" min="-180" max="180" value="0" step="0.5" oninput="applyRot(+this.value)">
-        </div>
-        <div class="field">
-          <label>Opacity <span id="sel-opd">100%</span></label>
-          <input type="range" id="sel-op" min="0" max="100" value="100" oninput="applyOp(+this.value)">
-        </div>
-        <button class="btn brd bfull bxs" style="margin-top:2px;" onclick="deleteSelected()">Delete Selected</button>
-      </div>
-
-      <!-- Save to Library -->
-      <div class="panel" id="save-panel" style="display:none;">
-        <div class="ptitle">Save Logo to Library</div>
-        <div class="save-row">
-          <input type="text" id="save-name" placeholder="Logo name...">
-          <button class="btn ba bxs" onclick="saveToLibrary()">Save</button>
-        </div>
-      </div>
-
-    </div><!-- /sidebar -->
-
-    <!-- STAGE -->
-    <div class="stage" id="stage">
-      <div class="couter" id="couter">
-        <div class="cscale" id="cscale">
-          <div id="cv"></div>
         </div>
       </div>
     </div>
 
   </div>
-</div><!-- /app-screen -->
+</div>
 
-<div style="position:fixed;bottom:7px;right:12px;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:.5px;pointer-events:none;z-index:10;font-family:'DM Sans',sans-serif;">Powered by Promotional Source</div>
+<!-- ══ SETTINGS MODAL ══ -->
+<div class="modal-bg" id="settingsBg">
+  <div class="modal">
+    <h3>⚙ Settings</h3>
+    <p>Change the app password, or replace the proof template.</p>
+    <label>Current Password</label>
+    <input type="password" id="sCur" placeholder="Current password">
+    <label>New Password</label>
+    <input type="password" id="sNew" placeholder="New password (min 4 chars)">
+    <label>Confirm New Password</label>
+    <input type="password" id="sCfm" placeholder="Re-enter new password">
+    <div class="merr" id="sErr"></div>
+    <div class="mrow" style="margin-bottom:14px">
+      <button class="mbtn s" onclick="closeSettings()">Cancel</button>
+      <button class="mbtn p" onclick="savePwd()">Update Password</button>
+    </div>
+    <hr style="border-color:#2a2a2a;margin-bottom:14px">
+    <label style="display:block;margin-bottom:10px">Replace Proof Template PDF</label>
+    <label class="setup-browse" style="font-size:12px;padding:7px 16px">
+      Upload New Template
+      <input type="file" id="replaceTemplate" accept=".pdf" style="display:none" onchange="replaceTemplatePDF(this)">
+    </label>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- PDF.js, jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-// ════════════════════════════════════════════════════
-// USER ACCOUNTS  —  Edit this list to manage access
-// Format: 'username': 'password'
-// ════════════════════════════════════════════════════
-var USERS = {
-  'craig':  'promo2024',
-  'hunter': 'hunter2024'
+'use strict';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ── Storage wrapper ─────────────────────────────────── */
+const ST = {
+  get(k)    { return localStorage.getItem(k); },
+  set(k, v) { localStorage.setItem(k, v); },
+  del(k)    { localStorage.removeItem(k); }
 };
 
-// ════════════════════════════════════════════════════
-// STATE
-// ════════════════════════════════════════════════════
-var currentUser = null;
-var items = [], selId = null, zoom = 1, zCtr = 1;
-var canvasW = 1024, canvasH = 1537;
-var bgImgSrc = null, bgNatW = 0, bgNatH = 0;
-var sessionLogos = [];
-var undoHistory = [], redoStack = [];
-var eyedropperActive = false;
-var toneColorHex = '#888888';
-var toneColorPicked = false;
-var embTimer = null;
+/* ── State ───────────────────────────────────────────── */
+const DEF_PWD = 'PSC2026';
+let pwd = DEF_PWD;
 
-// ════════════════════════════════════════════════════
-// LOGIN
-// ════════════════════════════════════════════════════
-function tryLogin() {
-  var user = (document.getElementById('login-user').value || '').trim().toLowerCase();
-  var pass = document.getElementById('login-pass').value;
-  document.getElementById('login-err').textContent = '';
-  if (!user) { document.getElementById('login-err').textContent = 'Please enter your username.'; return; }
-  if (USERS[user] && USERS[user] === pass) {
-    currentUser = user;
-    document.getElementById('login-screen').style.display = 'none';
-    var app = document.getElementById('app-screen');
-    app.style.display = 'flex';
-    app.style.flexDirection = 'column';
-    document.getElementById('huser').textContent = user;
-    initApp();
+// Vendor PDF
+let vendorPDF = null, vendorPage = 1, vendorPages = 0;
+let vendorFitScale = 1, vendorScale = 1;
+
+// Template PDF
+let templatePDF = null, tmplNatW = 0, tmplNatH = 0;
+let proofScale = 1;
+
+// Crop
+let cropOn = false, dragging = false, hasSel = false;
+let sx = 0, sy = 0, ex = 0, ey = 0;
+
+// Drag/resize
+let dragState = null;
+
+/* ── Bootstrap ───────────────────────────────────────── */
+(async () => {
+  const p = ST.get('mp_pwd'); if (p) pwd = p;
+
+  if (sessionStorage.getItem('mp_auth') !== '1') return; // login screen stays visible
+
+  // Logged in — check if template exists
+  const tmplB64 = ST.get('mp_template');
+  if (!tmplB64) {
+    showSetup();
   } else {
-    document.getElementById('login-err').textContent = 'Invalid username or password.';
-    document.getElementById('login-pass').value = '';
+    await initTemplateFromB64(tmplB64);
+    showApp();
   }
-}
+})();
 
-function signOut() {
-  currentUser = null;
-  clearAll();
-  document.getElementById('app-screen').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-user').value = '';
-  document.getElementById('login-pass').value = '';
-  document.getElementById('login-err').textContent = '';
-}
+window.addEventListener('resize', () => {
+  scaleProof();
+  if (vendorPDF) recalcVendorFit().then(() => { vendorScale = vendorFitScale; renderVendor(); });
+});
 
-// ════════════════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════════════════
-function initApp() {
-  canvasW = 1024; canvasH = 1537;
-  document.getElementById('inp-w').value = canvasW;
-  document.getElementById('inp-h').value = canvasH;
-  applyCanvasSize();
-  setTimeout(fitZoom, 80);
-}
-
-// ════════════════════════════════════════════════════
-// CANVAS SIZE
-// ════════════════════════════════════════════════════
-function applyCanvasSize() {
-  canvasW = parseInt(document.getElementById('inp-w').value) || 1024;
-  canvasH = parseInt(document.getElementById('inp-h').value) || 1537;
-  var cv = document.getElementById('cv');
-  cv.style.width = canvasW + 'px';
-  cv.style.height = canvasH + 'px';
-  applyBg();
-}
-
-function setPreset(w, h) {
-  document.getElementById('inp-w').value = w;
-  document.getElementById('inp-h').value = h;
-  applyCanvasSize();
-  setTimeout(fitZoom, 50);
-}
-
-function applyBg() {
-  var cv = document.getElementById('cv');
-  if (bgImgSrc) {
-    cv.style.backgroundImage = 'url(' + bgImgSrc + ')';
-    cv.style.backgroundSize = 'cover';
-    cv.style.backgroundPosition = 'center';
-    cv.style.backgroundColor = '';
-  } else {
-    cv.style.backgroundImage = '';
-    cv.style.backgroundColor = '#ffffff';
-  }
-}
-
-function fitZoom() {
-  var stage = document.getElementById('stage');
-  var aw = stage.clientWidth - 48, ah = stage.clientHeight - 48;
-  if (aw < 10 || ah < 10) return;
-  zoom = Math.min(0.98, Math.min(aw / canvasW, ah / canvasH));
-  zoom = Math.max(0.05, zoom);
-  applyZoom();
-}
-
-function adjustZoom(d) {
-  zoom = Math.max(0.05, Math.min(4, zoom + d));
-  applyZoom();
-}
-
-function applyZoom() {
-  document.getElementById('cscale').style.transform = 'scale(' + zoom + ')';
-  document.getElementById('couter').style.width = (canvasW * zoom) + 'px';
-  document.getElementById('couter').style.height = (canvasH * zoom) + 'px';
-  document.getElementById('zoomlbl').textContent = Math.round(zoom * 100) + '%';
-}
-
-// ════════════════════════════════════════════════════
-// CLEAR
-// ════════════════════════════════════════════════════
-function clearAll() {
-  items.forEach(function(it) { var el = document.getElementById('ci-' + it.id); if (el) el.remove(); });
-  items = []; selId = null; zCtr = 1;
-  bgImgSrc = null; bgNatW = 0; bgNatH = 0;
-  sessionLogos = [];
-  undoHistory = []; redoStack = [];
-  applyBg();
-  document.getElementById('photo-info').textContent = '';
-  renderLogoThumbs();
-  selectItem(null);
-}
-
-// ════════════════════════════════════════════════════
-// PRODUCT PHOTO
-// ════════════════════════════════════════════════════
-function handleProduct(e) {
-  var file = e.target.files[0]; if (!file) return;
-  var r = new FileReader();
-  r.onload = function(ev) {
-    var img = new Image();
-    img.onload = function() {
-      bgNatW = img.naturalWidth; bgNatH = img.naturalHeight;
-      bgImgSrc = ev.target.result;
-      // Auto-adjust canvas height to match photo ratio
-      canvasH = Math.round(canvasW * (bgNatH / bgNatW));
-      document.getElementById('inp-h').value = canvasH;
-      applyCanvasSize();
-      document.getElementById('photo-info').textContent = file.name + ' (' + bgNatW + '×' + bgNatH + ')';
-      document.getElementById('remove-logo-btn').style.display = '';
-      setTimeout(fitZoom, 60);
-    };
-    img.src = ev.target.result;
-  };
-  r.readAsDataURL(file);
-  e.target.value = '';
-}
-
-// ════════════════════════════════════════════════════
-// LOGO UPLOAD + SESSION THUMBS
-// ════════════════════════════════════════════════════
-function handleLogoUpload(e) {
-  var file = e.target.files[0]; if (!file) return;
-  var r = new FileReader();
-  r.onload = function(ev) {
-    var name = stripExt(file.name);
-    sessionLogos.push({ id: uid(), src: ev.target.result, name: name });
-    renderLogoThumbs();
-    addLogoToCanvas(ev.target.result, name);
-  };
-  r.readAsDataURL(file);
-  e.target.value = '';
-}
-
-function renderLogoThumbs() {
-  var grid = document.getElementById('logothumbs');
-  var empty = document.getElementById('logo-empty');
-  grid.innerHTML = '';
-  if (!sessionLogos.length) { empty.style.display = ''; return; }
-  empty.style.display = 'none';
-  sessionLogos.forEach(function(logo) {
-    var th = document.createElement('div'); th.className = 'th';
-    var img = document.createElement('img'); img.src = logo.src; img.alt = logo.name;
-    th.appendChild(img);
-    th.title = logo.name;
-    th.onclick = function() { addLogoToCanvas(logo.src, logo.name); };
-    grid.appendChild(th);
-  });
-}
-
-function addLogoToCanvas(src, name) {
-  var img = new Image();
-  img.onload = function() {
-    var maxW = Math.round(canvasW * 0.28);
-    var maxH = Math.round(canvasH * 0.25);
-    var sc = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
-    sc = Math.min(sc, 1);
-    var w = Math.round(img.naturalWidth * sc);
-    var h = Math.round(img.naturalHeight * sc);
-    var item = {
-      id: uid(), type: 'logo', src: src, origSrc: src, name: name,
-      x: Math.round((canvasW - w) / 2), y: Math.round((canvasH - h) / 2),
-      w: w, h: h, rot: 0, opacity: 100, effect: null
-    };
-    items.push(item);
-    makeEl(item);
-    selectItem(item.id);
-    pushUndo();
-  };
-  img.src = src;
-}
-
-// ════════════════════════════════════════════════════
-// CANVAS ELEMENT (logo item)
-// ════════════════════════════════════════════════════
-function makeEl(item) {
-  var el = document.createElement('div');
-  el.className = 'ci'; el.id = 'ci-' + item.id;
-  var img = document.createElement('img'); img.src = item.src;
-  el.appendChild(img);
-  var ring = document.createElement('div'); ring.className = 'ring'; el.appendChild(ring);
-  ['tl','tr','bl','br'].forEach(function(pos) {
-    var h = document.createElement('div'); h.className = 'rh ' + pos;
-    h.onmousedown = function(e) { e.stopPropagation(); startResize(e, item, el, pos); };
-    el.appendChild(h);
-  });
-  var rline = document.createElement('div'); rline.className = 'rline'; el.appendChild(rline);
-  var roth = document.createElement('div'); roth.className = 'roth'; roth.textContent = '↻';
-  roth.onmousedown = function(e) { e.stopPropagation(); startRotate(e, item, el); };
-  el.appendChild(roth);
-  var dh = document.createElement('div'); dh.className = 'dh'; dh.textContent = '×';
-  dh.onclick = function(e) { e.stopPropagation(); removeItem(item.id); };
-  el.appendChild(dh);
-  el.onmousedown = function(e) {
-    if (['rh','roth','dh'].some(function(c){ return e.target.classList.contains(c); })) return;
-    e.stopPropagation();
-    selectItem(item.id);
-    startDrag(e, item, el);
-  };
-  posEl(el, item);
-  document.getElementById('cv').appendChild(el);
-}
-
-function posEl(el, item) {
-  el.style.left = item.x + 'px';
-  el.style.top = item.y + 'px';
-  el.style.width = item.w + 'px';
-  el.style.height = item.h + 'px';
-  el.style.transform = 'rotate(' + (item.rot || 0) + 'deg)';
-  el.style.opacity = (item.opacity != null ? item.opacity : 100) / 100;
-  var img = el.querySelector('img'); if (img) img.src = item.src;
-}
-
-function removeItem(id) {
-  var el = document.getElementById('ci-' + id); if (el) el.remove();
-  items = items.filter(function(i) { return i.id !== id; });
-  if (selId === id) selectItem(null);
-  pushUndo();
-}
-
-function deleteSelected() { if (selId) removeItem(selId); }
-
-// ════════════════════════════════════════════════════
-// SELECT
-// ════════════════════════════════════════════════════
-function selectItem(id) {
-  selId = id;
-  document.querySelectorAll('.ci').forEach(function(el) { el.classList.remove('sel'); });
-  var item = id ? items.find(function(i) { return i.id === id; }) : null;
-  var show = !!item;
-  document.getElementById('sel-panel').style.display = show ? '' : 'none';
-  document.getElementById('fx-panel').style.display = show ? '' : 'none';
-  document.getElementById('save-panel').style.display = show ? '' : 'none';
-  if (!show) {
-    document.getElementById('tone-panel').style.display = 'none';
-    document.getElementById('emb-panel').style.display = 'none';
-    deactivateEyedropper();
+/* ── Auth ─────────────────────────────────────────────── */
+function doLogin() {
+  const v = document.getElementById('pwdIn').value;
+  if (v !== pwd) {
+    const e = document.getElementById('loginErr');
+    e.textContent = '✕ Incorrect password';
+    document.getElementById('pwdIn').value = '';
+    setTimeout(() => e.textContent = '', 3000);
     return;
   }
-  var el = document.getElementById('ci-' + id); if (el) el.classList.add('sel');
-  document.getElementById('sel-title').textContent = item.name;
-  document.getElementById('save-name').value = item.name;
-  syncFields(item);
-  syncFxBtns(item);
-}
+  sessionStorage.setItem('mp_auth', '1');
+  document.getElementById('loginScreen').style.display = 'none';
 
-function syncFields(item) {
-  document.getElementById('sel-x').value = Math.round(item.x);
-  document.getElementById('sel-y').value = Math.round(item.y);
-  document.getElementById('sel-w').value = Math.round(item.w);
-  document.getElementById('sel-h').value = Math.round(item.h);
-  document.getElementById('sel-rot').value = item.rot || 0;
-  document.getElementById('sel-rotd').textContent = (item.rot || 0) + '°';
-  document.getElementById('sel-op').value = item.opacity != null ? item.opacity : 100;
-  document.getElementById('sel-opd').textContent = (item.opacity != null ? item.opacity : 100) + '%';
-}
-
-function syncFxBtns(item) {
-  ['white','black','tone','emb'].forEach(function(k) {
-    var b = document.getElementById('fx-' + k); if (b) b.classList.remove('active');
-  });
-  var map = { white: 'fx-white', black: 'fx-black', tone: 'fx-tone', embroidery: 'fx-emb' };
-  if (item.effect && map[item.effect]) document.getElementById(map[item.effect]).classList.add('active');
-}
-
-// ════════════════════════════════════════════════════
-// FIELD INPUTS
-// ════════════════════════════════════════════════════
-function applyField(f) {
-  if (!selId) return;
-  var item = items.find(function(i) { return i.id === selId; }); if (!item) return;
-  var v = parseFloat(document.getElementById('sel-' + f).value); if (isNaN(v)) return;
-  item[f] = v;
-  posEl(document.getElementById('ci-' + selId), item);
-}
-
-function applyRot(v) {
-  if (!selId) return;
-  var item = items.find(function(i) { return i.id === selId; }); if (!item) return;
-  item.rot = v;
-  document.getElementById('sel-rotd').textContent = v + '°';
-  posEl(document.getElementById('ci-' + selId), item);
-}
-
-function applyOp(v) {
-  if (!selId) return;
-  var item = items.find(function(i) { return i.id === selId; }); if (!item) return;
-  item.opacity = v;
-  document.getElementById('sel-opd').textContent = v + '%';
-  posEl(document.getElementById('ci-' + selId), item);
-}
-
-// ════════════════════════════════════════════════════
-// DRAG
-// ════════════════════════════════════════════════════
-function startDrag(e, item, el) {
-  var sx = e.clientX, sy = e.clientY, ox = item.x, oy = item.y;
-  function mv(ev) {
-    item.x = ox + (ev.clientX - sx) / zoom;
-    item.y = oy + (ev.clientY - sy) / zoom;
-    posEl(el, item);
-    document.getElementById('sel-x').value = Math.round(item.x);
-    document.getElementById('sel-y').value = Math.round(item.y);
+  const tmplB64 = ST.get('mp_template');
+  if (!tmplB64) {
+    showSetup();
+  } else {
+    initTemplateFromB64(tmplB64).then(() => showApp());
   }
-  function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); pushUndo(); }
-  document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
 }
 
-// ════════════════════════════════════════════════════
-// RESIZE
-// ════════════════════════════════════════════════════
-function startResize(e, item, el, pos) {
-  e.preventDefault();
-  var sx = e.clientX, sy = e.clientY, ox = item.x, oy = item.y, ow = item.w, oh = item.h;
-  function mv(ev) {
-    var dx = (ev.clientX - sx) / zoom, dy = (ev.clientY - sy) / zoom;
-    if (pos === 'br') { item.w = Math.max(20, ow + dx); item.h = Math.max(20, oh + dy); }
-    else if (pos === 'bl') { item.w = Math.max(20, ow - dx); item.x = ox + (ow - item.w); item.h = Math.max(20, oh + dy); }
-    else if (pos === 'tr') { item.w = Math.max(20, ow + dx); item.h = Math.max(20, oh - dy); item.y = oy + (oh - item.h); }
-    else if (pos === 'tl') { item.w = Math.max(20, ow - dx); item.x = ox + (ow - item.w); item.h = Math.max(20, oh - dy); item.y = oy + (oh - item.h); }
-    posEl(el, item); syncFields(item);
-  }
-  function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); pushUndo(); }
-  document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+function doLogout() {
+  sessionStorage.removeItem('mp_auth');
+  location.reload();
 }
 
-// ════════════════════════════════════════════════════
-// ROTATE
-// ════════════════════════════════════════════════════
-function startRotate(e, item, el) {
-  e.preventDefault();
-  var rect = el.getBoundingClientRect();
-  var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
-  function mv(ev) {
-    var angle = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI + 90;
-    item.rot = Math.round(angle);
-    document.getElementById('sel-rot').value = item.rot;
-    document.getElementById('sel-rotd').textContent = item.rot + '°';
-    posEl(el, item);
-  }
-  function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); pushUndo(); }
-  document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+function showSetup() {
+  document.getElementById('setupScreen').style.display = 'flex';
+  initSetupDrop();
 }
 
-// ════════════════════════════════════════════════════
-// UNDO / REDO
-// ════════════════════════════════════════════════════
-function pushUndo() {
-  undoHistory.push(JSON.stringify(items));
-  if (undoHistory.length > 30) undoHistory.shift();
-  redoStack = [];
+function showApp() {
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  initVendorDrop();
+  initCropEvents();
+  requestAnimationFrame(scaleProof);
 }
 
-document.addEventListener('keydown', function(e) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); doUndo(); }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); doRedo(); }
-});
-
-function doUndo() {
-  if (!undoHistory.length) return;
-  redoStack.push(JSON.stringify(items));
-  restoreSnap(JSON.parse(undoHistory.pop()));
+/* ── Settings ─────────────────────────────────────────── */
+function openSettings()  { document.getElementById('settingsBg').classList.add('open'); }
+function closeSettings() {
+  document.getElementById('settingsBg').classList.remove('open');
+  ['sCur','sNew','sCfm'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sErr').textContent = '';
 }
-function doRedo() {
-  if (!redoStack.length) return;
-  undoHistory.push(JSON.stringify(items));
-  restoreSnap(JSON.parse(redoStack.pop()));
+function savePwd() {
+  const cur = document.getElementById('sCur').value;
+  const nw  = document.getElementById('sNew').value;
+  const cf  = document.getElementById('sCfm').value;
+  const err = document.getElementById('sErr');
+  if (cur !== pwd)     { err.textContent = 'Current password is incorrect.'; return; }
+  if (nw.length < 4)  { err.textContent = 'Password must be at least 4 characters.'; return; }
+  if (nw !== cf)       { err.textContent = 'Passwords do not match.'; return; }
+  pwd = nw; ST.set('mp_pwd', nw);
+  closeSettings(); toast('Password updated!', 's');
 }
-function restoreSnap(snap) {
-  document.querySelectorAll('.ci').forEach(function(el) { el.remove(); });
-  items = snap;
-  items.forEach(function(it) { makeEl(it); });
-  selectItem(null);
-}
-
-// ════════════════════════════════════════════════════
-// LOGO EFFECTS — shared helpers
-// ════════════════════════════════════════════════════
-function getSelItem() {
-  return selId ? items.find(function(i) { return i.id === selId; }) : null;
+async function replaceTemplatePDF(inp) {
+  const f = inp.files[0]; if (!f) return;
+  await saveTemplateFile(f);
+  closeSettings();
+  toast('Template replaced — reloading…', 's');
+  setTimeout(() => location.reload(), 1200);
 }
 
-function applyColorEffect(type) {
-  var item = getSelItem(); if (!item) return;
-  closeFxPanels();
-  var rgb = type === 'white' ? [255, 255, 255] : [0, 0, 0];
-  makeColored(item.origSrc, rgb[0], rgb[1], rgb[2], function(src) {
-    item.src = src; item.colorSrc = src; item.effect = type;
-    updateSrc(item); syncFxBtns(item); pushUndo();
-  });
-}
-
-function resetEffect() {
-  var item = getSelItem(); if (!item) return;
-  item.src = item.origSrc; item.colorSrc = null; item.effect = null;
-  updateSrc(item); syncFxBtns(item);
-  closeFxPanels();
-  deactivateEyedropper();
-  pushUndo();
-}
-
-function updateSrc(item) {
-  var el = document.getElementById('ci-' + item.id); if (!el) return;
-  var img = el.querySelector('img'); if (img) img.src = item.src;
-}
-
-function closeFxPanels() {
-  document.getElementById('tone-panel').style.display = 'none';
-  document.getElementById('emb-panel').style.display = 'none';
-  document.getElementById('fx-tone').classList.remove('active');
-  document.getElementById('fx-emb').classList.remove('active');
-}
-
-function makeColored(src, r, g, b, cb) {
-  var img = new Image();
-  img.onload = function() {
-    var c = document.createElement('canvas');
-    c.width = img.naturalWidth; c.height = img.naturalHeight;
-    var ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
-    var d = ctx.getImageData(0, 0, c.width, c.height); var px = d.data;
-    for (var i = 0; i < px.length; i += 4) {
-      if (px[i+3] > 10) { px[i] = r; px[i+1] = g; px[i+2] = b; }
+/* ── Template Setup Drop Zone ─────────────────────────── */
+function initSetupDrop() {
+  const zone = document.getElementById('setupZone');
+  zone.addEventListener('dragenter', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragover',  e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  zone.addEventListener('dragleave', e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag'); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') {
+      document.getElementById('templateFile').value = '';
+      loadTemplateFile(f);
+    } else {
+      toast('Please drop a PDF file', 'e');
     }
-    ctx.putImageData(d, 0, 0); cb(c.toDataURL('image/png'));
-  };
-  img.src = src;
+  });
+  zone.addEventListener('click', e => {
+    if (!['LABEL','INPUT','BUTTON'].includes(e.target.tagName))
+      document.getElementById('templateFile').click();
+  });
 }
 
-// ════════════════════════════════════════════════════
-// TONE ON TONE
-// ════════════════════════════════════════════════════
-function toggleTonePanel() {
-  var panel = document.getElementById('tone-panel');
-  var open = panel.style.display !== 'none';
-  document.getElementById('emb-panel').style.display = 'none';
-  document.getElementById('fx-emb').classList.remove('active');
-  if (open) {
-    panel.style.display = 'none';
-    document.getElementById('fx-tone').classList.remove('active');
-    deactivateEyedropper();
-  } else {
-    panel.style.display = '';
-    document.getElementById('fx-tone').classList.add('active');
+function loadTemplate(inp) { const f = inp.files[0]; if (f) loadTemplateFile(f); }
+
+async function loadTemplateFile(file) {
+  toast('Saving template…', 'i');
+  await saveTemplateFile(file);
+  const b64 = ST.get('mp_template');
+  await initTemplateFromB64(b64);
+  showApp();
+  toast('Template saved! You\'re all set.', 's');
+}
+
+async function saveTemplateFile(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Store as base64 data URL
+      ST.set('mp_template', reader.result);
+      res();
+    };
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function initTemplateFromB64(dataUrl) {
+  // dataUrl is "data:application/pdf;base64,..."
+  const base64 = dataUrl.split(',')[1];
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  templatePDF = await pdfjsLib.getDocument({ data: bytes }).promise;
+
+  // Render page 1 of template at high resolution (3× for quality)
+  const page = await templatePDF.getPage(1);
+  const vp   = page.getViewport({ scale: 3 }); // 3× = crisp at any zoom
+  tmplNatW = vp.width;
+  tmplNatH = vp.height;
+
+  const tc = document.getElementById('templateCanvas');
+  tc.width  = tmplNatW;
+  tc.height = tmplNatH;
+  await page.render({ canvasContext: tc.getContext('2d'), viewport: vp }).promise;
+}
+
+/* ── Proof scaling ────────────────────────────────────── */
+/* The template canvas has natural size tmplNatW × tmplNatH.
+   We CSS-scale proofDoc to fit the right panel.              */
+function scaleProof() {
+  if (!tmplNatW) return;
+  const rp = document.getElementById('rpanel');
+  const pd = document.getElementById('proofDoc');
+  const wr = document.getElementById('proofWrapper');
+  const aw = rp.clientWidth  - 16;
+  const ah = rp.clientHeight - 16;
+  proofScale = Math.min(aw / tmplNatW, ah / tmplNatH);
+  pd.style.transform = `scale(${proofScale})`;
+  pd.style.width  = tmplNatW + 'px';
+  pd.style.height = tmplNatH + 'px';
+  wr.style.width  = (tmplNatW * proofScale) + 'px';
+  wr.style.height = (tmplNatH * proofScale) + 'px';
+}
+
+/* ── Vendor PDF drop zone ─────────────────────────────── */
+function initVendorDrop() {
+  const uz = document.getElementById('upzone');
+  const pa = document.getElementById('pdfarea');
+  [uz, pa].forEach(el => {
+    el.addEventListener('dragenter', e => { e.preventDefault(); uz.classList.add('drag'); });
+    el.addEventListener('dragover',  e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    el.addEventListener('dragleave', e => { if (!pa.contains(e.relatedTarget)) uz.classList.remove('drag'); });
+    el.addEventListener('drop', e => {
+      e.preventDefault(); uz.classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f && f.type === 'application/pdf') loadVendorFile(f);
+      else toast('Please drop a PDF file', 'e');
+    });
+  });
+  uz.addEventListener('click', e => {
+    if (!['BUTTON','LABEL','INPUT'].includes(e.target.tagName))
+      document.getElementById('vendorFile').click();
+  });
+}
+
+function loadVendor(inp) { const f = inp.files[0]; if (f) loadVendorFile(f); inp.value = ''; }
+
+async function loadVendorFile(file) {
+  try {
+    const buf = await file.arrayBuffer();
+    vendorPDF = await pdfjsLib.getDocument({ data: buf }).promise;
+    vendorPages = vendorPDF.numPages; vendorPage = 1;
+    document.getElementById('upzone').style.display = 'none';
+    document.getElementById('cwrap').style.display = 'inline-block';
+    document.getElementById('lctrl').style.display = 'flex';
+    await recalcVendorFit();
+    vendorScale = vendorFitScale;
+    await renderVendor();
+    updatePgUI();
+    setHint('Enable Crop Mode — drag a rectangle, then Paste to Proof →');
+    toast(`"${file.name}" loaded`, 's');
+  } catch (err) {
+    console.error(err);
+    toast('Could not load PDF', 'e');
   }
 }
 
-function activateEyedropper() {
-  if (!bgImgSrc) { showToast('Upload a product photo first.'); return; }
-  eyedropperActive = true;
-  document.getElementById('stage').classList.add('eyedrop-mode');
-  var btn = document.getElementById('eyedrop-btn');
-  btn.textContent = '💧 Click on the photo...';
-  btn.style.background = 'rgba(62,207,142,.2)';
+async function recalcVendorFit() {
+  const page = await vendorPDF.getPage(vendorPage);
+  const vp1  = page.getViewport({ scale: 1 });
+  const pa   = document.getElementById('pdfarea');
+  const aw   = pa.clientWidth  - 20;
+  const ah   = pa.clientHeight - 20;
+  vendorFitScale = Math.min(aw / vp1.width, ah / vp1.height);
 }
 
-function deactivateEyedropper() {
-  eyedropperActive = false;
-  var stage = document.getElementById('stage');
-  if (stage) stage.classList.remove('eyedrop-mode');
-  var btn = document.getElementById('eyedrop-btn');
-  if (btn) { btn.textContent = '💧 Pick Colour from Photo'; btn.style.background = ''; }
+async function renderVendor() {
+  const page = await vendorPDF.getPage(vendorPage);
+  // Render at 2× for crisp display, then set CSS size to 1× so it fits the panel
+  const vp   = page.getViewport({ scale: vendorScale * 2 });
+  const vc   = document.getElementById('vendorCanvas');
+  const sc   = document.getElementById('selCanvas');
+  // Canvas pixel size = 2× (high-res)
+  vc.width = sc.width = vp.width;
+  vc.height = sc.height = vp.height;
+  // CSS display size = 1× (fits the panel, but renders crisp)
+  vc.style.width  = (vp.width  / 2) + 'px';
+  vc.style.height = (vp.height / 2) + 'px';
+  sc.style.width  = (vp.width  / 2) + 'px';
+  sc.style.height = (vp.height / 2) + 'px';
+  await page.render({ canvasContext: vc.getContext('2d'), viewport: vp }).promise;
+  clearSel(); hasSel = false;
+  document.getElementById('pasteBtn').disabled = true;
 }
 
-// Eyedropper click on canvas
-document.addEventListener('click', function(e) {
-  if (!eyedropperActive) return;
-  var cv = document.getElementById('cv');
-  if (!cv) return;
-  // Check if click is within the canvas element
-  var rect = cv.getBoundingClientRect();
-  if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
-  e.stopPropagation();
-  var cx = (e.clientX - rect.left) / zoom;
-  var cy = (e.clientY - rect.top) / zoom;
-  deactivateEyedropper();
-  sampleColor(cx, cy);
-}, true);
-
-function sampleColor(cx, cy) {
-  var img = new Image();
-  img.onload = function() {
-    var sc = Math.max(canvasW / img.naturalWidth, canvasH / img.naturalHeight);
-    var bw = img.naturalWidth * sc, bh = img.naturalHeight * sc;
-    var bx = (canvasW - bw) / 2, by = (canvasH - bh) / 2;
-    var ix = Math.round((cx - bx) / sc);
-    var iy = Math.round((cy - by) / sc);
-    ix = Math.max(0, Math.min(img.naturalWidth - 1, ix));
-    iy = Math.max(0, Math.min(img.naturalHeight - 1, iy));
-    var tc = document.createElement('canvas');
-    tc.width = img.naturalWidth; tc.height = img.naturalHeight;
-    var tctx = tc.getContext('2d'); tctx.drawImage(img, 0, 0);
-    var px = tctx.getImageData(ix, iy, 1, 1).data;
-    toneColorHex = rgbHex(px[0], px[1], px[2]);
-    toneColorPicked = true;
-    document.getElementById('tone-label').textContent = 'Colour sampled';
-    document.getElementById('tone-apply-btn').disabled = false;
-    updateTonePreview();
-    applyToneLive();
-    showToast('Colour sampled!');
-  };
-  img.src = bgImgSrc;
+function gotoPage(d) {
+  const np = vendorPage + d;
+  if (np < 1 || np > vendorPages) return;
+  vendorPage = np; renderVendor(); updatePgUI();
+}
+function updatePgUI() {
+  document.getElementById('pgi').textContent = `${vendorPage}/${vendorPages}`;
+  document.getElementById('prevBtn').disabled = vendorPage <= 1;
+  document.getElementById('nextBtn').disabled = vendorPage >= vendorPages;
+}
+async function doZoom(d) {
+  if (!vendorPDF) return;
+  vendorScale = Math.max(.3, Math.min(4, vendorScale + d));
+  document.getElementById('zd').textContent = Math.round(vendorScale / vendorFitScale * 100) + '%';
+  await renderVendor();
 }
 
-function onToneSlider() {
-  var v = document.getElementById('tone-slider').value;
-  document.getElementById('tone-val-lbl').textContent = (v > 0 ? '+' : '') + v + '%';
-  updateTonePreview();
-  if (toneColorPicked) applyToneLive();
+/* ── Crop events ─────────────────────────────────────── */
+function initCropEvents() {
+  const cw = document.getElementById('cwrap');
+  cw.addEventListener('mousedown', cropMD);
+  cw.addEventListener('mousemove', cropMM);
+  cw.addEventListener('mouseup',   cropMU);
+  cw.addEventListener('mouseleave',cropMU);
 }
 
-function updateTonePreview() {
-  var adj = getAdjustedRgb();
-  var hex = rgbHex(adj.r, adj.g, adj.b);
-  document.getElementById('tone-swatch').style.background = hex;
-  document.getElementById('tone-hex').textContent = hex;
+function toggleCrop() {
+  if (!vendorPDF) { toast('Upload a vendor PDF first', 'e'); return; }
+  cropOn = !cropOn;
+  document.getElementById('cropBtn').textContent = '✂ Crop Mode: ' + (cropOn ? 'ON' : 'OFF');
+  document.getElementById('cropBtn').className = 'bbtn ' + (cropOn ? 'on' : 'off');
+  document.getElementById('cwrap').className = 'cwrap' + (cropOn ? ' con' : '');
+  if (!cropOn) { clearSel(); hasSel = false; document.getElementById('pasteBtn').disabled = true; }
+  setHint(cropOn ? 'Drag a rectangle on the vendor PDF to select artwork' : 'Crop mode off');
 }
 
-function getAdjustedRgb() {
-  var base = hexRgb(toneColorHex);
-  var pct = parseInt(document.getElementById('tone-slider').value) / 100;
-  var r, g, b;
-  if (pct < 0) {
-    r = Math.round(base.r * (1 + pct));
-    g = Math.round(base.g * (1 + pct));
-    b = Math.round(base.b * (1 + pct));
-  } else {
-    r = Math.round(base.r + (255 - base.r) * pct);
-    g = Math.round(base.g + (255 - base.g) * pct);
-    b = Math.round(base.b + (255 - base.b) * pct);
-  }
+function vendorPos(e) {
+  const vc = document.getElementById('vendorCanvas');
+  const r  = vc.getBoundingClientRect();
+  // vc.width is 2× the CSS display width, so multiply by 2 to get canvas coords
   return {
-    r: Math.max(0, Math.min(255, r)),
-    g: Math.max(0, Math.min(255, g)),
-    b: Math.max(0, Math.min(255, b))
+    x: (e.clientX - r.left) * (vc.width  / r.width),
+    y: (e.clientY - r.top)  * (vc.height / r.height)
   };
 }
 
-function applyToneLive() {
-  var item = getSelItem(); if (!item) return;
-  var adj = getAdjustedRgb();
-  makeColored(item.origSrc, adj.r, adj.g, adj.b, function(src) {
-    item.src = src; item.colorSrc = src; item.effect = 'tone';
-    updateSrc(item); syncFxBtns(item);
-  });
+function cropMD(e) {
+  if (!cropOn || !vendorPDF) return;
+  e.preventDefault(); dragging = true; hasSel = false;
+  const p = vendorPos(e); sx = ex = p.x; sy = ey = p.y;
+  document.getElementById('pasteBtn').disabled = true;
+}
+function cropMM(e) {
+  if (!dragging || !cropOn) return;
+  e.preventDefault();
+  const p = vendorPos(e); ex = p.x; ey = p.y;
+  drawSel();
+}
+function cropMU(e) {
+  if (!dragging) return; dragging = false; if (!cropOn) return;
+  const w = Math.abs(ex - sx), h = Math.abs(ey - sy);
+  if (w > 15 && h > 15) {
+    hasSel = true;
+    document.getElementById('pasteBtn').disabled = false;
+    setHint('Selection ready — click Paste to Proof →');
+  } else { clearSel(); }
 }
 
-function commitTone() {
-  var item = getSelItem(); if (!item) return;
-  var adj = getAdjustedRgb();
-  makeColored(item.origSrc, adj.r, adj.g, adj.b, function(src) {
-    item.src = src; item.colorSrc = src; item.effect = 'tone';
-    updateSrc(item); syncFxBtns(item);
-    pushUndo(); showToast('Tone on tone applied!');
-  });
+function drawSel() {
+  const sc  = document.getElementById('selCanvas');
+  const ctx = sc.getContext('2d');
+  ctx.clearRect(0, 0, sc.width, sc.height);
+  ctx.fillStyle = 'rgba(0,0,0,.45)';
+  ctx.fillRect(0, 0, sc.width, sc.height);
+  const rx = Math.min(sx, ex), ry = Math.min(sy, ey);
+  const rw = Math.abs(ex - sx), rh = Math.abs(ey - sy);
+  ctx.clearRect(rx, ry, rw, rh);
+  ctx.strokeStyle = '#5db535'; ctx.lineWidth = 2.5;
+  ctx.strokeRect(rx, ry, rw, rh);
+  ctx.fillStyle = '#5db535';
+  [[rx,ry],[rx+rw,ry],[rx,ry+rh],[rx+rw,ry+rh]].forEach(([cx,cy]) => ctx.fillRect(cx-5,cy-5,10,10));
+  const lbl = `${Math.round(rw)} × ${Math.round(rh)}`;
+  ctx.font = 'bold 12px monospace';
+  const tw = ctx.measureText(lbl).width + 10;
+  ctx.fillStyle = 'rgba(0,0,0,.75)';
+  ctx.fillRect(rx, ry > 24 ? ry - 24 : ry + rh + 2, tw, 19);
+  ctx.fillStyle = '#5db535';
+  ctx.fillText(lbl, rx + 5, ry > 24 ? ry - 8 : ry + rh + 16);
+}
+function clearSel() {
+  document.getElementById('selCanvas').getContext('2d').clearRect(0, 0, 99999, 99999);
 }
 
-// ════════════════════════════════════════════════════
-// EMBROIDERY
-// ════════════════════════════════════════════════════
-function toggleEmbPanel() {
-  var panel = document.getElementById('emb-panel');
-  var open = panel.style.display !== 'none';
-  document.getElementById('tone-panel').style.display = 'none';
-  document.getElementById('fx-tone').classList.remove('active');
-  deactivateEyedropper();
-  if (open) {
-    panel.style.display = 'none';
-    document.getElementById('fx-emb').classList.remove('active');
-    var item = getSelItem();
-    if (item && item.effect === 'embroidery') {
-      item.src = item.colorSrc || item.origSrc;
-      item.effect = item.colorSrc ? 'tone' : null;
-      updateSrc(item); syncFxBtns(item);
-    }
+/* ── HIGH-RES PASTE ──────────────────────────────────────
+   Re-renders the vendor page at 4× fit scale so crops stay
+   crisp even when enlarged significantly on the proof.      */
+async function doPaste() {
+  if (!hasSel) return;
+
+  const vc = document.getElementById('vendorCanvas');
+  // Convert selection to fractional page coordinates
+  const fx = Math.min(sx, ex) / vc.width;
+  const fy = Math.min(sy, ey) / vc.height;
+  const fw = Math.abs(ex - sx) / vc.width;
+  const fh = Math.abs(ey - sy) / vc.height;
+
+  // Render vendor page at 4× fit scale
+  const hiScale = vendorFitScale * 4;
+  const page    = await vendorPDF.getPage(vendorPage);
+  const hiVP    = page.getViewport({ scale: hiScale });
+  const hiC     = document.createElement('canvas');
+  hiC.width     = hiVP.width;
+  hiC.height    = hiVP.height;
+  await page.render({ canvasContext: hiC.getContext('2d'), viewport: hiVP }).promise;
+
+  // Extract crop region
+  const cx = Math.round(fx * hiVP.width);
+  const cy = Math.round(fy * hiVP.height);
+  const cw = Math.round(fw * hiVP.width);
+  const ch = Math.round(fh * hiVP.height);
+  const tmp = document.createElement('canvas');
+  tmp.width = cw; tmp.height = ch;
+  tmp.getContext('2d').drawImage(hiC, cx, cy, cw, ch, 0, 0, cw, ch);
+  const url = tmp.toDataURL('image/png');
+
+  // Initial display size — fill as much of the artArea as possible by default.
+  // The hi-res crop (cw×ch) maps to the proof coordinate space.
+  // tmplNatW/H is the template's natural pixel size; pasteLayer matches that.
+  // We want the crop to fill ~92% of the artArea width or height (whichever fits).
+  const pl  = document.getElementById('pasteLayer');
+  const plW = pl.offsetWidth;
+  const plH = pl.offsetHeight;
+  const ratio = cw / ch;
+  // Start at full artArea size and scale down to fit
+  let iw = plW * 0.92;
+  let ih = iw / ratio;
+  if (ih > plH * 0.92) { ih = plH * 0.92; iw = ih * ratio; }
+  iw = Math.round(iw); ih = Math.round(ih);
+
+  document.getElementById('artPh').style.display = 'none';
+
+  const div = document.createElement('div');
+  div.className = 'pimg';
+  div.style.cssText = `left:${Math.round((plW - iw) / 2)}px;top:${Math.round((plH - ih) / 2)}px;width:${iw}px;height:${ih}px`;
+  div.innerHTML =
+    `<img src="${url}" draggable="false">` +
+    `<div class="border"></div>` +
+    `<button class="prm" onclick="rmImg(this)">✕</button>` +
+    `<div class="rh nw" data-h="nw"></div><div class="rh n" data-h="n"></div>` +
+    `<div class="rh ne" data-h="ne"></div><div class="rh e" data-h="e"></div>` +
+    `<div class="rh se" data-h="se"></div><div class="rh s" data-h="s"></div>` +
+    `<div class="rh sw" data-h="sw"></div><div class="rh w" data-h="w"></div>`;
+
+  div.addEventListener('mousedown', startMove);
+  div.querySelectorAll('.rh').forEach(h => h.addEventListener('mousedown', startResize));
+  pl.appendChild(div);
+
+  clearSel(); hasSel = false;
+  document.getElementById('pasteBtn').disabled = true;
+  setHint('Pasted at 4× resolution — drag to move, handles to resize. Paste more or export.');
+  toast('Pasted! High-res crop ready.', 's');
+}
+
+function rmImg(btn) {
+  btn.parentElement.remove();
+  if (!document.getElementById('pasteLayer').querySelector('.pimg'))
+    document.getElementById('artPh').style.display = 'flex';
+}
+
+/* ── Drag / Resize ───────────────────────────────────── */
+function startMove(e) {
+  if (e.target.classList.contains('rh') || e.target.classList.contains('prm')) return;
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll('.pimg').forEach(p => p.classList.remove('sel'));
+  this.classList.add('sel');
+  dragState = { type: 'move', el: this, startX: e.clientX, startY: e.clientY,
+    origL: parseInt(this.style.left) || 0, origT: parseInt(this.style.top) || 0 };
+}
+function startResize(e) {
+  e.preventDefault(); e.stopPropagation();
+  const el = this.closest('.pimg');
+  document.querySelectorAll('.pimg').forEach(p => p.classList.remove('sel'));
+  el.classList.add('sel');
+  dragState = { type: 'resize', el, handle: this.dataset.h,
+    startX: e.clientX, startY: e.clientY,
+    origL: parseInt(el.style.left) || 0, origT: parseInt(el.style.top) || 0,
+    origW: el.offsetWidth, origH: el.offsetHeight };
+}
+document.addEventListener('mousemove', e => {
+  if (!dragState) return;
+  const dx = (e.clientX - dragState.startX) / proofScale;
+  const dy = (e.clientY - dragState.startY) / proofScale;
+  const el = dragState.el, min = 30;
+  const pl = document.getElementById('pasteLayer');
+  if (dragState.type === 'move') {
+    el.style.left = Math.max(0, Math.min(pl.offsetWidth  - el.offsetWidth,  dragState.origL + dx)) + 'px';
+    el.style.top  = Math.max(0, Math.min(pl.offsetHeight - el.offsetHeight, dragState.origT + dy)) + 'px';
   } else {
-    panel.style.display = '';
-    document.getElementById('fx-emb').classList.add('active');
-    document.getElementById('emb-status').textContent = 'Adjust sliders then click Generate.';
+    const h = dragState.handle;
+    const { origL: l, origT: t, origW: w, origH: hh } = dragState;
+    if (h.includes('e')) { el.style.width  = Math.max(min, w + dx)  + 'px'; }
+    if (h.includes('s')) { el.style.height = Math.max(min, hh + dy) + 'px'; }
+    if (h.includes('w')) { const nw = Math.max(min, w - dx);  el.style.width = nw + 'px'; el.style.left = (l + w - nw) + 'px'; }
+    if (h.includes('n')) { const nh = Math.max(min, hh - dy); el.style.height = nh + 'px'; el.style.top  = (t + hh - nh) + 'px'; }
   }
-}
-
-function liveEmbroidery() {
-  var item = getSelItem(); if (!item) return;
-  var style   = document.getElementById('emb-style').value || 'satin';
-  var garment = document.getElementById('emb-garment').value || 'none';
-  var statusEl = document.getElementById('emb-status');
-  var genBtn = document.getElementById('emb-gen-btn');
-  statusEl.textContent = '⏳ Generating... (15–30 sec)';
-  statusEl.style.color = 'var(--ac)';
-  genBtn.disabled = true;
-
-  var baseSrc = item.colorSrc || item.origSrc;
-  prepareImageForAI(baseSrc, function(flatSrc, alphaMask, natW, natH) {
-    fetch('/api/embroidery', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: flatSrc, style: style, garment: garment })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      genBtn.disabled = false;
-      if (data.error) {
-        statusEl.textContent = '❌ ' + data.error;
-        statusEl.style.color = 'var(--rd)';
-        return;
-      }
-      if (garment === 'none') {
-        // Logo only — re-apply original alpha mask to preserve transparency
-        applyAlphaMask(data.image, alphaMask, natW, natH, function(finalSrc) {
-          item.src = finalSrc; item.effect = 'embroidery';
-          updateSrc(item); syncFxBtns(item);
-          statusEl.textContent = '✓ Done! Click Generate again to retry.';
-          statusEl.style.color = 'var(--gn)';
-          pushUndo();
-        });
-      } else {
-        // Garment mockup — use as-is, add to canvas as new item
-        item.src = data.image; item.effect = 'embroidery';
-        updateSrc(item); syncFxBtns(item);
-        statusEl.textContent = '✓ Done! Click Generate again to retry.';
-        statusEl.style.color = 'var(--gn)';
-        pushUndo();
-      }
-    })
-    .catch(function(err) {
-      genBtn.disabled = false;
-      statusEl.textContent = '❌ ' + err.message;
-      statusEl.style.color = 'var(--rd)';
-    });
-  });
-}
-
-function prepareImageForAI(src, cb) {
-  var img = new Image();
-  img.onload = function() {
-    var natW = img.naturalWidth, natH = img.naturalHeight;
-    // Get alpha mask from original
-    var mc = document.createElement('canvas'); mc.width = natW; mc.height = natH;
-    var mctx = mc.getContext('2d'); mctx.drawImage(img, 0, 0);
-    var alphaMask = mctx.getImageData(0, 0, natW, natH).data;
-
-    // Flatten onto white background for AI
-    var fc = document.createElement('canvas'); fc.width = natW; fc.height = natH;
-    var fctx = fc.getContext('2d');
-    fctx.fillStyle = '#ffffff'; fctx.fillRect(0, 0, natW, natH);
-    fctx.drawImage(img, 0, 0);
-    cb(fc.toDataURL('image/jpeg', 0.92), alphaMask, natW, natH);
-  };
-  img.src = src;
-}
-
-function applyAlphaMask(resultSrc, alphaMask, natW, natH, cb) {
-  var img = new Image();
-  img.onload = function() {
-    var c = document.createElement('canvas'); c.width = natW; c.height = natH;
-    var ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0, natW, natH);
-    var d = ctx.getImageData(0, 0, natW, natH);
-    for (var i = 3; i < d.data.length; i += 4) { d.data[i] = alphaMask[i]; }
-    ctx.putImageData(d, 0, 0);
-    cb(c.toDataURL('image/png'));
-  };
-  img.src = resultSrc;
-}
-
-function doEmbroidery() {} // no longer used — kept to avoid reference errors
-
-function doEmbroidery(src, stitchSpacing, depth, cb) {
-  var img = new Image();
-  img.onload = function() {
-    var cw = img.naturalWidth, ch = img.naturalHeight;
-    var c = document.createElement('canvas'); c.width = cw; c.height = ch;
-    var ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    var orig = ctx.getImageData(0, 0, cw, ch).data.slice();
-    var out = ctx.createImageData(cw, ch);
-    var d = out.data;
-    var dn = depth / 70;
-
-    for (var y = 0; y < ch; y++) {
-      for (var x = 0; x < cw; x++) {
-        var idx = (y * cw + x) * 4;
-        var a = orig[idx + 3];
-
-        // Subtle drop shadow just outside logo
-        if (a < 10) {
-          var sx = x - 2, sy = y - 2;
-          if (sx >= 0 && sy >= 0 && orig[(sy * cw + sx) * 4 + 3] > 50)
-            { d[idx]=0; d[idx+1]=0; d[idx+2]=0; d[idx+3]=45; }
-          continue;
-        }
-
-        var r = orig[idx], g = orig[idx+1], b = orig[idx+2];
-
-        // ── Fine diagonal fill stitches ───────────────────────────
-        // This is the primary embroidery look: tight parallel 45° lines
-        var phase = (x + y) % stitchSpacing;
-
-        // Stitch line = slightly lighter (thread catching light)
-        // Between stitches = slightly darker (thread depth/shadow)
-        var lf, df;
-        if (phase === 0) {
-          lf = dn * 0.18;
-          r = Math.round(r + (255 - r) * lf);
-          g = Math.round(g + (255 - g) * lf);
-          b = Math.round(b + (255 - b) * lf);
-        } else {
-          df = dn * (phase === 1 ? 0.14 : 0.07);
-          r = Math.round(r * (1 - df));
-          g = Math.round(g * (1 - df));
-          b = Math.round(b * (1 - df));
-        }
-
-        // ── Soft edge outline only (1px, subtle) ─────────────────
-        var leftA   = x > 0    ? orig[(y*cw+x-1)*4+3] : 0;
-        var topA    = y > 0    ? orig[((y-1)*cw+x)*4+3] : 0;
-        var rightA  = x < cw-1 ? orig[(y*cw+x+1)*4+3] : 0;
-        var bottomA = y < ch-1 ? orig[((y+1)*cw+x)*4+3] : 0;
-        var onEdge  = leftA < 30 || topA < 30 || rightA < 30 || bottomA < 30;
-        if (onEdge) {
-          // Thin uniform darker outline — mimics satin stitch border
-          var ef = dn * 0.22;
-          r = Math.round(r * (1 - ef));
-          g = Math.round(g * (1 - ef));
-          b = Math.round(b * (1 - ef));
-        }
-
-        // ── Tiny thread irregularity noise ───────────────────────
-        var noise = (((x * 17 + y * 11) % 9) - 4) * dn * 3;
-        r = Math.max(0, Math.min(255, r + noise));
-        g = Math.max(0, Math.min(255, g + noise));
-        b = Math.max(0, Math.min(255, b + noise));
-
-        d[idx]=r; d[idx+1]=g; d[idx+2]=b; d[idx+3]=a;
-      }
-    }
-    ctx.putImageData(out, 0, 0);
-    cb(c.toDataURL('image/png'));
-  };
-  img.src = src;
-}
-
-// ════════════════════════════════════════════════════
-// LOGO LIBRARY (per-user localStorage)
-// ════════════════════════════════════════════════════
-function getLib() {
-  if (!currentUser) return [];
-  try { return JSON.parse(localStorage.getItem('mv_lib_' + currentUser) || '[]'); } catch(e) { return []; }
-}
-function saveLib(lib) {
-  if (!currentUser) return;
-  localStorage.setItem('mv_lib_' + currentUser, JSON.stringify(lib));
-}
-
-function saveToLibrary() {
-  var item = getSelItem(); if (!item) return;
-  var name = (document.getElementById('save-name').value || '').trim() || item.name;
-  var lib = getLib();
-  lib.push({ id: uid(), name: name, src: item.origSrc, savedAt: Date.now() });
-  saveLib(lib);
-  showToast('"' + name + '" saved to library!');
-}
-
-function openLibrary() {
-  var lib = getLib();
-  var overlay = document.createElement('div'); overlay.className = 'modal-overlay';
-  var box = document.createElement('div'); box.className = 'modal-box';
-  var ttl = document.createElement('div'); ttl.className = 'modal-title'; ttl.textContent = '📁 Logo Library';
-  var sub = document.createElement('div'); sub.className = 'modal-sub';
-  sub.textContent = 'Your saved logos. Click to add to canvas.';
-  box.appendChild(ttl); box.appendChild(sub);
-
-  if (!lib.length) {
-    var em = document.createElement('div');
-    em.style.cssText = 'text-align:center;color:var(--mu);padding:32px 16px;font-size:12px;';
-    em.textContent = 'No logos saved yet. Select a logo on the canvas and use "Save to Library".';
-    box.appendChild(em);
-  } else {
-    var grid = document.createElement('div'); grid.className = 'lib-grid';
-    lib.forEach(function(logo) {
-      var card = document.createElement('div'); card.className = 'lib-card';
-      var img = document.createElement('img'); img.src = logo.src; img.alt = logo.name;
-      var nm = document.createElement('div'); nm.className = 'lname'; nm.textContent = logo.name;
-      var del = document.createElement('button'); del.className = 'ldel'; del.textContent = '×';
-      del.onclick = function(e) {
-        e.stopPropagation();
-        if (!confirm('Remove "' + logo.name + '" from library?')) return;
-        saveLib(getLib().filter(function(x) { return x.id !== logo.id; }));
-        overlay.remove(); openLibrary();
-      };
-      card.onclick = function() {
-        sessionLogos.push({ id: uid(), src: logo.src, name: logo.name });
-        renderLogoThumbs();
-        addLogoToCanvas(logo.src, logo.name);
-        overlay.remove();
-      };
-      card.appendChild(img); card.appendChild(nm); card.appendChild(del);
-      grid.appendChild(card);
-    });
-    box.appendChild(grid);
-  }
-  var close = document.createElement('button');
-  close.className = 'btn bh bfull'; close.style.marginTop = '16px'; close.textContent = 'Close';
-  close.onclick = function() { overlay.remove(); };
-  box.appendChild(close);
-  overlay.appendChild(box);
-  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
-  document.body.appendChild(overlay);
-}
-
-// ════════════════════════════════════════════════════
-// LOGO REMOVAL (paint brush heal tool)
-// ════════════════════════════════════════════════════
-var editCanvas = null, editCtx = null, editPainting = false;
-var editBrushSize = 20;
-var editOrigBg = null; // store original so cancel works
-
-function activateLogoRemoval() {
-  if (!bgImgSrc) { showToast('Upload a product photo first.'); return; }
-  editOrigBg = bgImgSrc;
-  var cv = document.getElementById('cv');
-  editCanvas = document.createElement('canvas');
-  editCanvas.width = canvasW; editCanvas.height = canvasH;
-  editCanvas.style.cssText = 'position:absolute;left:0;top:0;width:' + canvasW + 'px;height:' + canvasH + 'px;z-index:500;cursor:crosshair;';
-  editCtx = editCanvas.getContext('2d', { willReadFrequently: true });
-  var img = new Image();
-  img.onload = function() {
-    var sc = Math.max(canvasW / img.naturalWidth, canvasH / img.naturalHeight);
-    var bw = img.naturalWidth * sc, bh = img.naturalHeight * sc;
-    editCtx.drawImage(img, (canvasW - bw) / 2, (canvasH - bh) / 2, bw, bh);
-    cv.appendChild(editCanvas);
-    document.getElementById('edit-controls').style.display = '';
-    document.getElementById('remove-logo-btn').style.display = 'none';
-    setupEditEvents();
-    showToast('Paint over the logo to remove it.');
-  };
-  img.src = bgImgSrc;
-}
-
-function setupEditEvents() {
-  function getPos(e) {
-    var rect = editCanvas.getBoundingClientRect();
-    return { x: Math.round((e.clientX - rect.left) / zoom), y: Math.round((e.clientY - rect.top) / zoom) };
-  }
-  function paint(e) {
-    var pos = getPos(e);
-    var r = editBrushSize;
-    // Sample ~16 points on ring around brush for surrounding color
-    var tr = 0, tg = 0, tb = 0, n = 0;
-    var sampleDist = r + 14;
-    for (var a = 0; a < 16; a++) {
-      var ang = (a / 16) * Math.PI * 2;
-      var sx = Math.round(pos.x + sampleDist * Math.cos(ang));
-      var sy = Math.round(pos.y + sampleDist * Math.sin(ang));
-      sx = Math.max(0, Math.min(editCanvas.width - 1, sx));
-      sy = Math.max(0, Math.min(editCanvas.height - 1, sy));
-      var px = editCtx.getImageData(sx, sy, 1, 1).data;
-      tr += px[0]; tg += px[1]; tb += px[2]; n++;
-    }
-    var ar = Math.round(tr / n), ag = Math.round(tg / n), ab = Math.round(tb / n);
-    // Paint circle with averaged color + fabric noise
-    var x0 = Math.max(0, pos.x - r - 1), y0 = Math.max(0, pos.y - r - 1);
-    var x1 = Math.min(editCanvas.width, pos.x + r + 2), y1 = Math.min(editCanvas.height, pos.y + r + 2);
-    var iw = x1 - x0, ih = y1 - y0; if (iw <= 0 || ih <= 0) return;
-    var imgd = editCtx.getImageData(x0, y0, iw, ih);
-    var d = imgd.data;
-    for (var fy = 0; fy < ih; fy++) {
-      for (var fx = 0; fx < iw; fx++) {
-        var dx = (x0 + fx) - pos.x, dy = (y0 + fy) - pos.y;
-        if (dx * dx + dy * dy <= r * r) {
-          var idx = (fy * iw + fx) * 4;
-          var noise = (Math.sin(fx * 73.1 + fy * 191.9) * 10) | 0;
-          d[idx]   = Math.max(0, Math.min(255, ar + noise));
-          d[idx+1] = Math.max(0, Math.min(255, ag + noise));
-          d[idx+2] = Math.max(0, Math.min(255, ab + noise));
-          d[idx+3] = 255;
-        }
-      }
-    }
-    editCtx.putImageData(imgd, x0, y0);
-  }
-  editCanvas.onmousedown = function(e) { editPainting = true; paint(e); };
-  editCanvas.onmousemove = function(e) { if (editPainting) paint(e); };
-  editCanvas.onmouseup = function() { editPainting = false; };
-  editCanvas.onmouseleave = function() { editPainting = false; };
-}
-
-function commitLogoRemoval() {
-  bgImgSrc = editCanvas.toDataURL('image/png');
-  bgNatW = canvasW; bgNatH = canvasH;
-  editCanvas.remove(); editCanvas = null; editCtx = null;
-  applyBg();
-  document.getElementById('edit-controls').style.display = 'none';
-  document.getElementById('remove-logo-btn').style.display = '';
-  showToast('Photo updated!');
-}
-
-function cancelLogoRemoval() {
-  bgImgSrc = editOrigBg;
-  editCanvas.remove(); editCanvas = null; editCtx = null;
-  applyBg();
-  document.getElementById('edit-controls').style.display = 'none';
-  document.getElementById('remove-logo-btn').style.display = '';
-}
-
-// ════════════════════════════════════════════════════
-// EXPORT
-// ════════════════════════════════════════════════════
-function exportPNG() {
-  var btn = document.getElementById('expbtn');
-  btn.textContent = 'Exporting...'; btn.disabled = true;
-  setTimeout(function() {
-    var scale = 2;
-    var cvs = document.createElement('canvas');
-    cvs.width = canvasW * scale; cvs.height = canvasH * scale;
-    var ctx = cvs.getContext('2d');
-    ctx.scale(scale, scale);
-    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-
-    function drawBg(next) {
-      if (!bgImgSrc) {
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvasW, canvasH); next(); return;
-      }
-      var bi = new Image();
-      bi.onload = function() {
-        var sc = Math.max(canvasW / bi.width, canvasH / bi.height);
-        var bw = bi.width * sc, bh = bi.height * sc;
-        ctx.drawImage(bi, (canvasW - bw) / 2, (canvasH - bh) / 2, bw, bh);
-        next();
-      };
-      bi.src = bgImgSrc;
-    }
-
-    drawBg(function() {
-      var i = 0;
-      function next() {
-        if (i >= items.length) {
-          var link = document.createElement('a');
-          link.download = 'merchvirtual-mockup.png';
-          link.href = cvs.toDataURL('image/png');
-          link.click();
-          btn.textContent = 'Export PNG'; btn.disabled = false;
-          return;
-        }
-        var item = items[i++];
-        var img = new Image();
-        img.onload = function() {
-          var nr = img.naturalWidth / img.naturalHeight;
-          var dw, dh;
-          if (item.w / item.h > nr) { dh = item.h; dw = dh * nr; }
-          else { dw = item.w; dh = dw / nr; }
-          var cx2 = item.x + item.w / 2, cy2 = item.y + item.h / 2;
-          ctx.save();
-          ctx.globalAlpha = (item.opacity != null ? item.opacity : 100) / 100;
-          ctx.translate(cx2, cy2);
-          ctx.rotate((item.rot || 0) * Math.PI / 180);
-          ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
-          ctx.restore();
-          next();
-        };
-        img.onerror = next;
-        img.src = item.src;
-      }
-      next();
-    });
-  }, 40);
-}
-
-// ════════════════════════════════════════════════════
-// UTILS
-// ════════════════════════════════════════════════════
-function uid() { return Math.random().toString(36).slice(2, 10); }
-function stripExt(n) { return n.replace(/\.[^/.]+$/, ''); }
-
-function rgbHex(r, g, b) {
-  return '#' + [r, g, b].map(function(v) { return ('0' + v.toString(16)).slice(-2); }).join('');
-}
-
-function hexRgb(hex) {
-  var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : { r: 128, g: 128, b: 128 };
-}
-
-function showToast(msg) {
-  var t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 2400);
-}
-
-// Click canvas background to deselect
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('cv').addEventListener('mousedown', function(e) {
-    if (e.target === document.getElementById('cv')) selectItem(null);
-  });
 });
+document.addEventListener('mouseup', () => { dragState = null; });
+document.addEventListener('mousedown', e => {
+  if (!e.target.closest('.pimg')) document.querySelectorAll('.pimg').forEach(p => p.classList.remove('sel'));
+});
+
+/* ── Export PDF ──────────────────────────────────────────
+   Draws template canvas + all pasted images onto one
+   offscreen canvas — no html2canvas, pure canvas API,
+   pixel-perfect and full resolution.                       */
+async function doExport() {
+  const pasted = document.getElementById('pasteLayer').querySelectorAll('.pimg');
+  if (!pasted.length) { toast('Paste at least one crop before exporting', 'e'); return; }
+  toast('Generating PDF…', 'i');
+
+  try {
+    // Output canvas = template natural size
+    const out = document.createElement('canvas');
+    out.width  = tmplNatW;
+    out.height = tmplNatH;
+    const ctx  = out.getContext('2d');
+
+    // Draw template
+    ctx.drawImage(document.getElementById('templateCanvas'), 0, 0);
+
+    // Draw each pasted image at full proof-space coordinates
+    // pasteLayer coords are in proofDoc-space (tmplNatW × tmplNatH)
+    pasted.forEach(div => {
+      const img = div.querySelector('img');
+      const x = (parseInt(div.style.left) || 0);
+      const y = (parseInt(div.style.top)  || 0);
+      const w = div.offsetWidth;
+      const h = div.offsetHeight;
+      ctx.drawImage(img, x, y, w, h);
+    });
+
+    // Convert to PDF
+    const imgData = out.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+    const pw  = pdf.internal.pageSize.getWidth();
+    const ph  = pdf.internal.pageSize.getHeight();
+    const imgH = pw * (out.height / out.width);
+
+    if (imgH <= ph) {
+      pdf.addImage(imgData, 'JPEG', 0, 0, pw, imgH);
+    } else {
+      // Tall template — split into pages
+      const pxPP = (ph / pw) * out.width;
+      let yo = 0, first = true;
+      while (yo < out.height) {
+        const ch = Math.min(pxPP, out.height - yo);
+        const t  = document.createElement('canvas');
+        t.width = out.width; t.height = ch;
+        t.getContext('2d').drawImage(out, 0, yo, out.width, ch, 0, 0, out.width, ch);
+        if (!first) pdf.addPage();
+        pdf.addImage(t.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pw, ch * (ph / pxPP));
+        yo += ch; first = false;
+      }
+    }
+
+    pdf.save('Promotional Source Proof.pdf');
+    toast('✓ Exported: Promotional Source Proof.pdf', 's');
+  } catch (err) {
+    console.error(err);
+    toast('Export failed — please try again', 'e');
+  }
+}
+
+/* ── Helpers ─────────────────────────────────────────── */
+function setHint(t) { document.getElementById('hint').textContent = t; }
+let _tt;
+function toast(msg, t = 'i') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show ' + t;
+  clearTimeout(_tt); _tt = setTimeout(() => el.className = '', 3500);
+}
 </script>
 </body>
 </html>
