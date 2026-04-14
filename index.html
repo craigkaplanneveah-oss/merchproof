@@ -586,31 +586,27 @@ async function initTemplateFromB64(dataUrl, ori) {
 async function renderTemplate() {
   const pdf = (tmplOrientation === 'landscape') ? templatePDFlandscape : templatePDFportrait;
   if (!pdf) {
-    // If landscape selected but not uploaded yet, show a message
     if (tmplOrientation === 'landscape') {
       toast('No landscape template uploaded. Go to Settings to upload one.', 'e');
-      // Revert to portrait
       tmplOrientation = 'portrait';
-      document.getElementById('oriPort').className = 'ori-btn act';
-      document.getElementById('oriLand').className = 'ori-btn';
+      const pp = document.getElementById('oriPort');
+      const pl = document.getElementById('oriLand');
+      if (pp) pp.className = 'ori-btn act';
+      if (pl) pl.className = 'ori-btn';
     }
     return;
   }
+  // Read template dimensions from the PDF — no rendering to a static canvas
+  // (canvases are created dynamically per-page in buildProofPages)
   const page = await pdf.getPage(1);
-  const vp   = page.getViewport({ scale: 3 }); // render at 3x, no rotation
+  const vp   = page.getViewport({ scale: 3 });
   tmplNatW = vp.width;
   tmplNatH = vp.height;
-  const tc = document.getElementById('templateCanvas');
-  tc.width  = tmplNatW;
-  tc.height = tmplNatH;
-  await page.render({ canvasContext: tc.getContext('2d'), viewport: vp }).promise;
-  // Rebuild all proof pages with the new template
+  // Build/rebuild proof pages if a vendor file is loaded, otherwise just store dimensions
   if (vendorPages > 0) {
     await buildProofPages();
-  } else {
-    // No vendor loaded yet — just update tmplNatW/H for when it loads
-    scaleProof();
   }
+  // tmplNatW/H are now set — buildProofPages will use them when vendor is uploaded
 }
 
 async function setOrientation(ori) {
