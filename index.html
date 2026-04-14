@@ -176,9 +176,9 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
 .proof-pg-label{font-size:11px;font-weight:600;color:#ccc;text-align:center;margin-bottom:4px;font-family:Arial}
 
 /* Right panel bottom nav bar */
-.rctrl{height:38px;background:#181818;border-top:1px solid #222;display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0}
-.rpgi{font-size:11px;color:#fff;font-family:monospace;font-weight:600}
-.rnb{padding:3px 9px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:3px;color:#ccc;font-size:11px;cursor:pointer;font-family:inherit}.rnb:hover{background:#333;color:#fff}.rnb:disabled{opacity:.3;cursor:default}
+.rctrl{height:42px;background:#1e1e1e;border-top:1px solid #333;display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0}
+.rpgi{font-size:11px;color:#ffffff;font-family:monospace;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.rnb{padding:5px 12px;background:#333;border:1px solid #555;border-radius:4px;color:#ffffff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}.rnb:hover{background:#444;color:#fff}.rnb:disabled{opacity:.35;cursor:default}
 
 /* ─── LANDSCAPE UPLOAD MODAL ─── */
 .land-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:700;display:none;align-items:center;justify-content:center}
@@ -843,6 +843,37 @@ function scaleProof() {
   });
 }
 
+/* ── Orientation auto-detection ──────────────────────── */
+async function autoDetectOrientation() {
+  if (!vendorPDF) return;
+  const page = await vendorPDF.getPage(1);
+  const vp = page.getViewport({ scale: 1 });
+  // vp.width/height already account for the page's intrinsic rotation
+  const isLandscape = vp.width > vp.height;
+  await autoSwitchOrientation(isLandscape);
+}
+
+async function autoSwitchOrientation(isLandscape) {
+  const needed = isLandscape ? 'landscape' : 'portrait';
+  if (needed === tmplOrientation) return; // already correct
+  if (needed === 'landscape' && !templatePDFlandscape) {
+    toast('Landscape proof detected — upload a landscape template in Settings to auto-switch.', 'i');
+    return;
+  }
+  if (needed === 'portrait' && !templatePDFportrait) return;
+  tmplOrientation = needed;
+  const pp = document.getElementById('oriPort');
+  const pl = document.getElementById('oriLand');
+  if (pp) pp.className = 'ori-btn' + (needed === 'portrait'  ? ' act' : '');
+  if (pl) pl.className = 'ori-btn' + (needed === 'landscape' ? ' act' : '');
+  // Update template dimensions from the switched template
+  const pdf = needed === 'landscape' ? templatePDFlandscape : templatePDFportrait;
+  const pg  = await pdf.getPage(1);
+  const v   = pg.getViewport({ scale: 3 });
+  tmplNatW = v.width; tmplNatH = v.height;
+  toast('Detected ' + needed + ' proof — switched to matching template.', 's');
+}
+
 /* ── Vendor PDF drop zone ─────────────────────────────── */
 function initVendorDrop() {
   const uz = document.getElementById('upzone');
@@ -963,20 +994,22 @@ function renderVendorFromCanvas(oc) {
 let vendorImageCanvases = [];
 
 async function renderVendor() {
+  if (!vendorPDF) return;
   const page = await vendorPDF.getPage(vendorPage);
-  // Render at 2× for crisp display, then set CSS size to 1× so it fits the panel
-  const vp   = page.getViewport({ scale: vendorScale * 2 });
-  const vc   = document.getElementById('vendorCanvas');
-  const sc   = document.getElementById('selCanvas');
-  // Canvas pixel size = 2× (high-res)
-  vc.width = sc.width = vp.width;
+  // PDF.js automatically applies the page's intrinsic rotation when no rotation is passed.
+  // Render at 2x for crispness; CSS display at 1x.
+  const vp = page.getViewport({ scale: vendorScale * 2 });
+  const vc = document.getElementById('vendorCanvas');
+  const sc = document.getElementById('selCanvas');
+  vc.width  = sc.width  = vp.width;
   vc.height = sc.height = vp.height;
-  // CSS display size = 1× (fits the panel, but renders crisp)
-  vc.style.width  = (vp.width  / 2) + 'px';
-  vc.style.height = (vp.height / 2) + 'px';
-  sc.style.width  = (vp.width  / 2) + 'px';
-  sc.style.height = (vp.height / 2) + 'px';
-  await page.render({ canvasContext: vc.getContext('2d'), viewport: vp }).promise;
+  vc.style.width  = sc.style.width  = (vp.width  / 2) + 'px';
+  vc.style.height = sc.style.height = (vp.height / 2) + 'px';
+  // Cancel any in-progress render before starting a new one
+  if (vc._renderTask) { try { vc._renderTask.cancel(); } catch(e) {} }
+  vc._renderTask = page.render({ canvasContext: vc.getContext('2d'), viewport: vp });
+  await vc._renderTask.promise.catch(e => { if (e.name !== 'RenderingCancelledException') throw e; });
+  vc._renderTask = null;
   clearSel(); hasSel = false;
   document.getElementById('pasteBtn').disabled = true;
 }
