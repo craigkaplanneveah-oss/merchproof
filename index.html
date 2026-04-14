@@ -180,6 +180,20 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
 .rpgi{font-size:11px;color:#3a3a3a;font-family:monospace}
 .rnb{padding:3px 9px;background:#222;border:none;border-radius:3px;color:#555;font-size:11px;cursor:pointer;font-family:inherit}.rnb:hover{background:#2a2a2a;color:#aaa}.rnb:disabled{opacity:.25;cursor:default}
 
+/* ─── LANDSCAPE UPLOAD MODAL ─── */
+.land-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:700;display:none;align-items:center;justify-content:center}
+.land-modal-bg.open{display:flex}
+.land-modal{background:#222;border:1px solid #3a3a3a;border-radius:13px;padding:32px;width:420px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.land-modal h3{font-size:17px;font-weight:700;color:#fff;margin-bottom:8px}
+.land-modal p{font-size:12px;color:#555;margin-bottom:22px;line-height:1.6}
+.land-zone{border:2px dashed #3a3a3a;border-radius:9px;padding:28px 20px;cursor:pointer;transition:all .2s;background:#1e1e1e;margin-bottom:16px}
+.land-zone:hover,.land-zone.drag{border-color:#5db535;background:rgba(93,181,53,.05)}
+.land-zone-ico{font-size:34px;margin-bottom:8px;opacity:.45}
+.land-zone-t{font-size:13px;font-weight:600;color:#666;margin-bottom:4px}
+.land-zone-s{font-size:11px;color:#3a3a3a}
+.land-browse{display:inline-block;padding:8px 20px;background:#5db535;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+.land-cancel{margin-top:8px;font-size:11px;color:#444;cursor:pointer;background:none;border:none;font-family:inherit}.land-cancel:hover{color:#888}
+
 /* ─── TOAST ─── */
 #toast{position:fixed;bottom:16px;right:16px;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all .2s;pointer-events:none}
 #toast.show{opacity:1;transform:translateY(0)}
@@ -321,16 +335,33 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
       Upload Portrait Template
       <input type="file" id="replaceTemplate" accept=".pdf" style="display:none" onchange="replaceTemplatePDF(this,'portrait')">
     </label>
-    <label style="display:block;margin-bottom:6px;margin-top:10px">Landscape Template PDF <span style="color:#555;font-size:10px;font-weight:400">(optional)</span></label>
+    <label style="display:block;margin-bottom:6px;margin-top:10px">Landscape Template PDF <span id="landTmplStatus" style="color:#5db535;font-size:10px;font-weight:600"></span></label>
     <label class="setup-browse" style="font-size:12px;padding:7px 16px;display:inline-block">
-      Upload Landscape Template
+      Replace Landscape Template
       <input type="file" id="replaceLandTemplate" accept=".pdf" style="display:none" onchange="replaceTemplatePDF(this,'landscape')">
     </label>
-    <div id="landTmplStatus" style="font-size:11px;color:#555;margin-top:8px"></div>
   </div>
 </div>
 
 <div id="toast"></div>
+
+<!-- ══ LANDSCAPE TEMPLATE UPLOAD MODAL ══ -->
+<div class="land-modal-bg" id="landModalBg">
+  <div class="land-modal">
+    <h3>▭ Upload Landscape Template</h3>
+    <p>You need to upload your landscape proof template PDF once.<br>
+       This will be saved to your browser automatically.</p>
+    <div class="land-zone" id="landZone">
+      <div class="land-zone-ico">📄</div>
+      <div class="land-zone-t">Drop your landscape template PDF here</div>
+      <div class="land-zone-s">or click Browse to select it</div>
+      <label class="land-browse">Browse PDF
+        <input type="file" id="landTemplateFile" accept=".pdf" style="display:none" onchange="uploadLandTemplate(this)">
+      </label>
+    </div>
+    <button class="land-cancel" onclick="closeLandModal()">Cancel — stay on portrait</button>
+  </div>
+</div>
 
 <!-- PDF.js, jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -448,6 +479,11 @@ function showApp() {
   initVendorDrop();
   initCropEvents();
   requestAnimationFrame(scaleProof);
+  // Show landscape template status in Settings
+  if (ST.get('mp_template_land')) {
+    const el = document.getElementById('landTmplStatus');
+    if (el) { el.textContent = '✓ Uploaded'; el.style.color = '#5db535'; }
+  }
 }
 
 /* ── Settings ─────────────────────────────────────────── */
@@ -578,12 +614,62 @@ async function renderTemplate() {
 }
 
 async function setOrientation(ori) {
+  if (ori === 'landscape' && !templatePDFlandscape) {
+    // No landscape template uploaded yet — show the upload modal
+    openLandModal();
+    return;
+  }
   if (!templatePDFportrait) { toast('Upload a portrait template in Settings first', 'e'); return; }
   tmplOrientation = ori;
   document.getElementById('oriPort').className = 'ori-btn' + (ori === 'portrait'  ? ' act' : '');
   document.getElementById('oriLand').className = 'ori-btn' + (ori === 'landscape' ? ' act' : '');
   await renderTemplate();
-  if (ori === 'landscape' && templatePDFlandscape) toast('Switched to landscape proof template', 's');
+  toast('Switched to ' + ori + ' proof template', 's');
+}
+
+/* ── Landscape template modal ────────────────────────── */
+function openLandModal() {
+  document.getElementById('landModalBg').classList.add('open');
+  // Init drag-and-drop on the zone
+  const zone = document.getElementById('landZone');
+  zone.addEventListener('dragenter', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragover',  e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  zone.addEventListener('dragleave', e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag'); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') processLandTemplate(f);
+    else toast('Please drop a PDF file', 'e');
+  });
+  zone.addEventListener('click', e => {
+    if (!['LABEL','INPUT','BUTTON'].includes(e.target.tagName))
+      document.getElementById('landTemplateFile').click();
+  });
+}
+
+function closeLandModal() {
+  document.getElementById('landModalBg').classList.remove('open');
+  document.getElementById('landTemplateFile').value = '';
+}
+
+function uploadLandTemplate(inp) {
+  const f = inp.files[0]; if (!f) return;
+  processLandTemplate(f);
+}
+
+async function processLandTemplate(file) {
+  closeLandModal();
+  toast('Saving landscape template…', 'i');
+  await saveTemplateFile(file, 'landscape');
+  const b64 = ST.get('mp_template_land');
+  await initTemplateFromB64(b64, 'landscape');
+  // Now switch to landscape
+  tmplOrientation = 'landscape';
+  document.getElementById('oriPort').className = 'ori-btn';
+  document.getElementById('oriLand').className = 'ori-btn act';
+  // Rebuild proof pages with new template
+  if (vendorPages > 0) await buildProofPages();
+  toast('Landscape template saved! Switched to landscape.', 's');
 }
 
 /* ── Multi-page proof management ────────────────────── */
