@@ -68,11 +68,22 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
 .up-s{font-size:12px;color:#333;line-height:1.7}
 .up-btn{padding:8px 20px;background:#5db535;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
 
-/* Canvas wrap — crop events attached here */
+/* Canvas wrap — crop/erase events attached here */
 .cwrap{position:relative;display:inline-block;line-height:0}
 .cwrap.con{cursor:crosshair}
+.cwrap.era{cursor:none}
 #vendorCanvas{display:block;box-shadow:0 4px 20px rgba(0,0,0,.6)}
 #selCanvas{position:absolute;top:0;left:0;pointer-events:none;z-index:5}
+/* Eraser size slider */
+.era-popup{position:absolute;bottom:46px;left:50%;transform:translateX(-50%);background:#2a2a2a;border:1px solid #3a3a3a;border-radius:8px;padding:8px 14px;display:none;align-items:center;gap:8px;white-space:nowrap;z-index:20;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.era-popup.open{display:flex}
+.era-popup label{font-size:11px;color:#777}
+.era-popup input[type=range]{width:90px;accent-color:#5db535}
+.era-popup span{font-size:11px;color:#aaa;width:28px;text-align:right}
+.bbtn.undo{background:#2a2a2a;color:#888;border:1px solid #333}.bbtn.undo:hover{background:#333;color:#ccc}.bbtn.undo:disabled{opacity:.3;cursor:default}
+.ori-grp{display:flex;border:1px solid #333;border-radius:6px;overflow:hidden}
+.ori-btn{padding:5px 10px;background:#2a2a2a;color:#666;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:all .15s}
+.ori-btn:hover{background:#333;color:#bbb}.ori-btn.act{background:rgba(93,181,53,.15);color:#5db535}
 
 /* Bottom controls */
 .lctrl{height:38px;background:#181818;border-top:1px solid #222;display:flex;align-items:center;padding:0 8px;gap:5px;flex-shrink:0}
@@ -192,7 +203,14 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
     <div class="logo">MERCH<em>PROOF</em></div>
     <div class="bsep"></div>
     <button class="bbtn off" id="cropBtn" onclick="toggleCrop()">✂ Crop Mode: OFF</button>
+    <button class="bbtn off" id="eraseBtn" onclick="toggleErase()">⬜ Eraser: OFF</button>
+    <button class="bbtn undo" id="undoBtn" onclick="doUndo()" disabled title="Undo last erase">↩ Undo</button>
     <button class="bbtn paste" id="pasteBtn" onclick="doPaste()" disabled>Paste to Proof →</button>
+    <div class="bsep"></div>
+    <div class="ori-grp" title="Proof template orientation">
+      <button class="ori-btn act" id="oriPort" onclick="setOrientation('portrait')">◻ Portrait</button>
+      <button class="ori-btn" id="oriLand" onclick="setOrientation('landscape')">▭ Landscape</button>
+    </div>
     <span class="hint" id="hint">Upload a vendor PDF on the left to begin</span>
     <div class="sp"></div>
     <button class="bbtn export" onclick="doExport()">⬇ Export PDF</button>
@@ -216,6 +234,12 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
         <div class="cwrap" id="cwrap" style="display:none">
           <canvas id="vendorCanvas"></canvas>
           <canvas id="selCanvas"></canvas>
+        </div>
+        <!-- Eraser size popup -->
+        <div class="era-popup" id="eraPopup">
+          <label>Size</label>
+          <input type="range" id="eraSize" min="10" max="120" value="40" oninput="updateEraSize()">
+          <span id="eraSizeVal">40</span>
         </div>
       </div>
       <div class="lctrl" id="lctrl" style="display:none">
@@ -307,6 +331,14 @@ let proofScale = 1;
 // Crop
 let cropOn = false, dragging = false, hasSel = false;
 let sx = 0, sy = 0, ex = 0, ey = 0;
+
+// Eraser
+let eraseOn = false, erasing = false;
+let eraSize = 40;
+let eraseHistory = []; // stack of ImageData snapshots for undo
+
+// Template orientation
+let tmplOrientation = 'portrait'; // 'portrait' or 'landscape'
 
 // Drag/resize
 let dragState = null;
@@ -444,24 +476,47 @@ async function saveTemplateFile(file) {
 }
 
 async function initTemplateFromB64(dataUrl) {
-  // dataUrl is "data:application/pdf;base64,..."
   const base64 = dataUrl.split(',')[1];
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-
   templatePDF = await pdfjsLib.getDocument({ data: bytes }).promise;
+  await renderTemplate();
+}
 
-  // Render page 1 of template at high resolution (3× for quality)
-  const page = await templatePDF.getPage(1);
-  const vp   = page.getViewport({ scale: 3 }); // 3× = crisp at any zoom
+/* Render the template at the current orientation.
+   - If the PDF has 2 pages: page 1 = portrait, page 2 = landscape.
+   - If the PDF has 1 page: portrait uses it as-is; landscape rotates 90°. */
+async function renderTemplate() {
+  const numPages = templatePDF.numPages;
+  let pageNum = 1;
+  let rotate = 0;
+  if (tmplOrientation === 'landscape') {
+    if (numPages >= 2) { pageNum = 2; rotate = 0; }
+    else { pageNum = 1; rotate = 90; }
+  }
+  const page = await templatePDF.getPage(pageNum);
+  const vp   = page.getViewport({ scale: 3, rotation: rotate });
   tmplNatW = vp.width;
   tmplNatH = vp.height;
-
   const tc = document.getElementById('templateCanvas');
   tc.width  = tmplNatW;
   tc.height = tmplNatH;
   await page.render({ canvasContext: tc.getContext('2d'), viewport: vp }).promise;
+  scaleProof();
+  // Clear all pasted images when orientation changes (they won't fit the new layout)
+  const pl = document.getElementById('pasteLayer');
+  pl.querySelectorAll('.pimg').forEach(el => el.remove());
+  document.getElementById('artPh').style.display = 'flex';
+}
+
+async function setOrientation(ori) {
+  if (!templatePDF) { toast('Upload a template PDF first', 'e'); return; }
+  tmplOrientation = ori;
+  document.getElementById('oriPort').className = 'ori-btn' + (ori === 'portrait'  ? ' act' : '');
+  document.getElementById('oriLand').className = 'ori-btn' + (ori === 'landscape' ? ' act' : '');
+  await renderTemplate();
+  toast('Switched to ' + ori + ' proof template', 's');
 }
 
 /* ── Proof scaling ────────────────────────────────────── */
@@ -570,17 +625,24 @@ async function doZoom(d) {
   await renderVendor();
 }
 
-/* ── Crop events ─────────────────────────────────────── */
+/* ── Crop & Erase events ─────────────────────────────── */
 function initCropEvents() {
   const cw = document.getElementById('cwrap');
-  cw.addEventListener('mousedown', cropMD);
-  cw.addEventListener('mousemove', cropMM);
-  cw.addEventListener('mouseup',   cropMU);
-  cw.addEventListener('mouseleave',cropMU);
+  cw.addEventListener('mousedown', onCWDown);
+  cw.addEventListener('mousemove', onCWMove);
+  cw.addEventListener('mouseup',   onCWUp);
+  cw.addEventListener('mouseleave', onCWLeave);
 }
+
+function onCWDown(e) { if (eraseOn) eraMD(e); else cropMD(e); }
+function onCWMove(e) { if (eraseOn) eraMM(e); else cropMM(e); }
+function onCWUp(e)   { if (eraseOn) eraMU(e); else cropMU(e); }
+function onCWLeave(e){ if (eraseOn) eraMU(e); else cropMU(e); eraCursor(null); }
 
 function toggleCrop() {
   if (!vendorPDF) { toast('Upload a vendor PDF first', 'e'); return; }
+  // Turn off eraser if active
+  if (eraseOn) { eraseOn = false; updateEraBtn(); document.getElementById('eraPopup').classList.remove('open'); }
   cropOn = !cropOn;
   document.getElementById('cropBtn').textContent = '✂ Crop Mode: ' + (cropOn ? 'ON' : 'OFF');
   document.getElementById('cropBtn').className = 'bbtn ' + (cropOn ? 'on' : 'off');
@@ -588,6 +650,84 @@ function toggleCrop() {
   if (!cropOn) { clearSel(); hasSel = false; document.getElementById('pasteBtn').disabled = true; }
   setHint(cropOn ? 'Drag a rectangle on the vendor PDF to select artwork' : 'Crop mode off');
 }
+
+/* ── Eraser tool ──────────────────────────────────────── */
+function toggleErase() {
+  if (!vendorPDF) { toast('Upload a vendor PDF first', 'e'); return; }
+  // Turn off crop if active
+  if (cropOn) { cropOn = false; clearSel(); hasSel = false; document.getElementById('pasteBtn').disabled = true;
+    document.getElementById('cropBtn').textContent = '✂ Crop Mode: OFF';
+    document.getElementById('cropBtn').className = 'bbtn off'; }
+  eraseOn = !eraseOn;
+  updateEraBtn();
+  const popup = document.getElementById('eraPopup');
+  if (eraseOn) { popup.classList.add('open'); setHint('Click and drag to erase (whiteout) parts of the vendor PDF'); }
+  else { popup.classList.remove('open'); eraCursor(null); setHint('Eraser off'); }
+}
+function updateEraBtn() {
+  document.getElementById('eraseBtn').textContent = '⬜ Eraser: ' + (eraseOn ? 'ON' : 'OFF');
+  document.getElementById('eraseBtn').className = 'bbtn ' + (eraseOn ? 'on' : 'off');
+  document.getElementById('cwrap').className = 'cwrap' + (eraseOn ? ' era' : cropOn ? ' con' : '');
+}
+function updateEraSize() {
+  eraSize = parseInt(document.getElementById('eraSize').value);
+  document.getElementById('eraSizeVal').textContent = eraSize;
+}
+
+/* Save snapshot to undo history (max 20 steps) */
+function eraSaveHistory() {
+  const vc = document.getElementById('vendorCanvas');
+  const snap = vc.getContext('2d').getImageData(0, 0, vc.width, vc.height);
+  eraseHistory.push(snap);
+  if (eraseHistory.length > 20) eraseHistory.shift();
+  document.getElementById('undoBtn').disabled = false;
+}
+
+function doUndo() {
+  if (!eraseHistory.length) return;
+  const snap = eraseHistory.pop();
+  const vc = document.getElementById('vendorCanvas');
+  vc.getContext('2d').putImageData(snap, 0, 0);
+  if (!eraseHistory.length) document.getElementById('undoBtn').disabled = true;
+}
+
+/* Draw eraser cursor preview on selCanvas */
+function eraCursor(pos) {
+  const sc = document.getElementById('selCanvas');
+  const ctx = sc.getContext('2d');
+  ctx.clearRect(0, 0, sc.width, sc.height);
+  if (!pos) return;
+  ctx.beginPath();
+  ctx.arc(pos.x, pos.y, eraSize / 2, 0, Math.PI * 2);
+  ctx.strokeStyle = '#e53e3e'; ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(pos.x, pos.y, 2, 0, Math.PI * 2);
+  ctx.fillStyle = '#e53e3e'; ctx.fill();
+}
+
+function eraMD(e) {
+  if (!eraseOn) return;
+  e.preventDefault(); erasing = true;
+  eraSaveHistory(); // snapshot before first stroke
+  const p = vendorPos(e);
+  const vc = document.getElementById('vendorCanvas');
+  const ctx = vc.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(p.x, p.y, eraSize / 2, 0, Math.PI * 2); ctx.fill();
+  eraCursor(p);
+}
+function eraMM(e) {
+  const p = vendorPos(e);
+  eraCursor(p);
+  if (!erasing || !eraseOn) return;
+  e.preventDefault();
+  const vc = document.getElementById('vendorCanvas');
+  const ctx = vc.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(p.x, p.y, eraSize / 2, 0, Math.PI * 2); ctx.fill();
+}
+function eraMU(e) { erasing = false; }
 
 function vendorPos(e) {
   const vc = document.getElementById('vendorCanvas');
@@ -659,7 +799,7 @@ async function doPaste() {
   const fw = Math.abs(ex - sx) / vc.width;
   const fh = Math.abs(ey - sy) / vc.height;
 
-  // Render vendor page at 4× fit scale
+  // Render vendor page at 4× fit scale for high resolution
   const hiScale = vendorFitScale * 4;
   const page    = await vendorPDF.getPage(vendorPage);
   const hiVP    = page.getViewport({ scale: hiScale });
@@ -667,6 +807,11 @@ async function doPaste() {
   hiC.width     = hiVP.width;
   hiC.height    = hiVP.height;
   await page.render({ canvasContext: hiC.getContext('2d'), viewport: hiVP }).promise;
+  // Bake eraser strokes: draw scaled vendorCanvas on top so white erased areas show in the crop
+  const tmpMask = document.createElement('canvas');
+  tmpMask.width = hiVP.width; tmpMask.height = hiVP.height;
+  tmpMask.getContext('2d').drawImage(vc, 0, 0, hiVP.width, hiVP.height);
+  hiC.getContext('2d').drawImage(tmpMask, 0, 0);
 
   // Extract crop region
   const cx = Math.round(fx * hiVP.width);
@@ -797,7 +942,8 @@ async function doExport() {
     // Convert to PDF
     const imgData = out.toDataURL('image/jpeg', 0.95);
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+    const pdfOri = (tmplNatW > tmplNatH) ? 'landscape' : 'portrait';
+    const pdf = new jsPDF({ orientation: pdfOri, unit: 'mm', format: 'letter' });
     const pw  = pdf.internal.pageSize.getWidth();
     const ph  = pdf.internal.pageSize.getHeight();
     const imgH = pw * (out.height / out.width);
