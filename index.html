@@ -1053,7 +1053,7 @@ function initCropEvents() {
 function onCWDown(e) { if (eraseOn) eraMD(e); else cropMD(e); }
 function onCWMove(e) { if (eraseOn) eraMM(e); else cropMM(e); }
 function onCWUp(e)   { if (eraseOn) eraMU(e); else cropMU(e); }
-function onCWLeave(e){ if (eraseOn) eraMU(e); else cropMU(e); eraCursor(null); }
+function onCWLeave(e){ if (eraseOn) { eraMU(e); eraCursor(null); } else { if (dragging) cropMU(e); } }
 
 function toggleCrop() {
   if (!vendorPDF) { toast('Upload a vendor PDF first', 'e'); return; }
