@@ -1243,11 +1243,13 @@ async function doPaste() {
   // The hi-res crop (cw×ch) maps to the proof coordinate space.
   // tmplNatW/H is the template's natural pixel size; pasteLayer matches that.
   // We want the crop to fill ~92% of the artArea width or height (whichever fits).
-  // Use current proof page paste layer for sizing
+  // Use current proof page paste layer for sizing.
+  // The paste layer is sized in CSS pixels (tmplNatW * proofScale),
+  // NOT in native template pixels. All position/size values must be CSS pixels.
   const curPg = proofPages[currentProofPage];
   const pl  = curPg ? curPg.pasteLayer : document.querySelector('.paste-layer');
-  const plW = tmplNatW; // use natural template dimensions for layout
-  const plH = tmplNatH;
+  const plW = pl.offsetWidth;   // CSS pixels — e.g. ~450px, not 2448px
+  const plH = pl.offsetHeight;
   // Size proportionally: if you selected 30% of the vendor page width,
   // the paste starts at 30% of the proof template width.
   // This gives natural, expected sizing. CSR can always resize with handles.
@@ -1318,8 +1320,9 @@ function startResize(e) {
 }
 document.addEventListener('mousemove', e => {
   if (!dragState) return;
-  const dx = (e.clientX - dragState.startX) / proofScale;
-  const dy = (e.clientY - dragState.startY) / proofScale;
+  // Paste layer has no CSS transform — viewport px maps 1:1 to CSS px
+  const dx = (e.clientX - dragState.startX);
+  const dy = (e.clientY - dragState.startY);
   const el = dragState.el, min = 30;
   // Get the paste layer from whichever proof page the element lives in
   const pl = el.closest('.paste-layer') || document.querySelector('.paste-layer');
@@ -1369,13 +1372,17 @@ async function doExport() {
       // Draw template
       ctx.drawImage(pg.canvas, 0, 0);
 
-      // Draw pasted images
+      // Draw pasted images.
+      // Paste layer is in CSS pixels (tmplNatW * proofScale wide).
+      // Output canvas is tmplNatW wide (native pixels).
+      // Scale factor = 1/proofScale converts CSS px → native px.
+      const sf = proofScale > 0 ? 1 / proofScale : 1;
       pg.pasteLayer.querySelectorAll('.pimg').forEach(div => {
         const img = div.querySelector('img');
-        const x = parseInt(div.style.left) || 0;
-        const y = parseInt(div.style.top)  || 0;
-        const w = div.offsetWidth;
-        const h = div.offsetHeight;
+        const x = (parseInt(div.style.left) || 0) * sf;
+        const y = (parseInt(div.style.top)  || 0) * sf;
+        const w = div.offsetWidth  * sf;
+        const h = div.offsetHeight * sf;
         ctx.drawImage(img, x, y, w, h);
       });
 
