@@ -1248,12 +1248,17 @@ async function doPaste() {
   const pl  = curPg ? curPg.pasteLayer : document.querySelector('.paste-layer');
   const plW = tmplNatW; // use natural template dimensions for layout
   const plH = tmplNatH;
-  const ratio = cw / ch;
-  // Start at full artArea size and scale down to fit
-  let iw = plW * 0.92;
-  let ih = iw / ratio;
-  if (ih > plH * 0.92) { ih = plH * 0.92; iw = ih * ratio; }
-  iw = Math.round(iw); ih = Math.round(ih);
+  // Size proportionally: if you selected 30% of the vendor page width,
+  // the paste starts at 30% of the proof template width.
+  // This gives natural, expected sizing. CSR can always resize with handles.
+  const cropAspect = cw / ch;
+  let iw = Math.round(fw * plW);   // fw = fraction of vendor page width selected
+  let ih = Math.round(iw / cropAspect);
+  // Cap to 95% of proof area so it never overflows, preserving aspect ratio
+  if (iw > plW * 0.95) { iw = Math.round(plW * 0.95); ih = Math.round(iw / cropAspect); }
+  if (ih > plH * 0.95) { ih = Math.round(plH * 0.95); iw = Math.round(ih * cropAspect); }
+  // Minimum size so it's always grabbable
+  if (iw < 40) { iw = 40; ih = Math.round(iw / cropAspect); }
 
   // Get the current proof page's paste layer
   const curPage = proofPages[currentProofPage];
