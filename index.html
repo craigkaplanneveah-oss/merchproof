@@ -153,6 +153,33 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
 .mbtn.p{background:#5db535;color:#fff}.mbtn.p:hover{background:#4a9a29}
 .mbtn.s{background:#2a2a2a;color:#777}.mbtn.s:hover{background:#333}
 
+/* ─── MULTI-PAGE PROOF ─── */
+/* Right panel scrolls vertically when multiple proof pages */
+.rpanel{overflow-y:auto !important}
+.rpanel::-webkit-scrollbar{width:7px}
+.rpanel::-webkit-scrollbar-track{background:#666}
+.rpanel::-webkit-scrollbar-thumb{background:#444;border-radius:3px}
+
+/* Proof pages stack vertically */
+#proofPagesWrap{display:flex;flex-direction:column;gap:14px;align-items:center;padding:8px}
+
+/* Each proof page */
+.proof-page{position:relative;flex-shrink:0;box-shadow:0 6px 30px rgba(0,0,0,.5);transform-origin:top left}
+.proof-page canvas{display:block}
+.proof-page .paste-layer{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;pointer-events:auto}
+.proof-page .artph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,.18);font-size:14px;pointer-events:none;text-align:center;font-family:Arial;line-height:1.6}
+
+/* Active proof page highlight */
+.proof-page.active-pg{outline:2px solid #5db535;outline-offset:2px}
+
+/* Page label above each proof page */
+.proof-pg-label{font-size:11px;font-weight:600;color:#ccc;text-align:center;margin-bottom:4px;font-family:Arial}
+
+/* Right panel bottom nav bar */
+.rctrl{height:38px;background:#181818;border-top:1px solid #222;display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0}
+.rpgi{font-size:11px;color:#3a3a3a;font-family:monospace}
+.rnb{padding:3px 9px;background:#222;border:none;border-radius:3px;color:#555;font-size:11px;cursor:pointer;font-family:inherit}.rnb:hover{background:#2a2a2a;color:#aaa}.rnb:disabled{opacity:.25;cursor:default}
+
 /* ─── TOAST ─── */
 #toast{position:fixed;bottom:16px;right:16px;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all .2s;pointer-events:none}
 #toast.show{opacity:1;transform:translateY(0)}
@@ -226,9 +253,9 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
         <div class="upzone" id="upzone">
           <div class="up-ico">📋</div>
           <div class="up-t">Drop vendor proof here</div>
-          <div class="up-s">Drag & drop or click to browse</div>
-          <label class="up-btn">Browse PDF
-            <input type="file" id="vendorFile" accept=".pdf" style="display:none" onchange="loadVendor(this)">
+          <div class="up-s">PDF, JPEG, PNG and other images supported</div>
+          <label class="up-btn">Browse File
+            <input type="file" id="vendorFile" accept=".pdf,image/jpeg,image/png,image/gif,image/webp,image/tiff" style="display:none" onchange="loadVendor(this)">
           </label>
         </div>
         <div class="cwrap" id="cwrap" style="display:none">
@@ -244,7 +271,7 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
       </div>
       <div class="lctrl" id="lctrl" style="display:none">
         <label class="uplbl2">📄 New PDF
-          <input type="file" id="vendorFile2" accept=".pdf" style="display:none" onchange="loadVendor(this)">
+          <input type="file" id="vendorFile2" accept=".pdf,image/jpeg,image/png,image/gif,image/webp,image/tiff" style="display:none" onchange="loadVendor(this)">
         </label>
         <button class="nb" id="prevBtn" onclick="gotoPage(-1)" disabled>◀</button>
         <button class="nb" id="nextBtn" onclick="gotoPage(1)"  disabled>▶</button>
@@ -257,15 +284,15 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
       </div>
     </div>
 
-    <!-- RIGHT: PS Template (rendered from uploaded PDF) -->
-    <div class="rpanel" id="rpanel">
-      <div id="proofWrapper">
-        <div id="proofDoc">
-          <canvas id="templateCanvas"></canvas>
-          <div id="pasteLayer" class="active">
-            <div class="artph" id="artPh">Paste cropped artwork here</div>
-          </div>
-        </div>
+    <!-- RIGHT: PS Proof pages (one per vendor page) -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div class="rpanel" id="rpanel" style="flex:1;background:#777;overflow-y:auto;padding:0">
+        <div id="proofPagesWrap"></div>
+      </div>
+      <div class="rctrl" id="rctrl" style="display:none">
+        <button class="rnb" id="rPrevBtn" onclick="gotoProofPage(-1)" disabled>◀ Prev Proof Page</button>
+        <span class="rpgi" id="rpgi">Proof 1 / 1</span>
+        <button class="rnb" id="rNextBtn" onclick="gotoProofPage(1)" disabled>Next Proof Page ▶</button>
       </div>
     </div>
 
@@ -289,11 +316,17 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
       <button class="mbtn p" onclick="savePwd()">Update Password</button>
     </div>
     <hr style="border-color:#2a2a2a;margin-bottom:14px">
-    <label style="display:block;margin-bottom:10px">Replace Proof Template PDF</label>
-    <label class="setup-browse" style="font-size:12px;padding:7px 16px">
-      Upload New Template
-      <input type="file" id="replaceTemplate" accept=".pdf" style="display:none" onchange="replaceTemplatePDF(this)">
+    <label style="display:block;margin-bottom:6px">Portrait Template PDF</label>
+    <label class="setup-browse" style="font-size:12px;padding:7px 16px;margin-bottom:14px;display:inline-block">
+      Upload Portrait Template
+      <input type="file" id="replaceTemplate" accept=".pdf" style="display:none" onchange="replaceTemplatePDF(this,'portrait')">
     </label>
+    <label style="display:block;margin-bottom:6px;margin-top:10px">Landscape Template PDF <span style="color:#555;font-size:10px;font-weight:400">(optional)</span></label>
+    <label class="setup-browse" style="font-size:12px;padding:7px 16px;display:inline-block">
+      Upload Landscape Template
+      <input type="file" id="replaceLandTemplate" accept=".pdf" style="display:none" onchange="replaceTemplatePDF(this,'landscape')">
+    </label>
+    <div id="landTmplStatus" style="font-size:11px;color:#555;margin-top:8px"></div>
   </div>
 </div>
 
@@ -337,8 +370,15 @@ let eraseOn = false, erasing = false;
 let eraSize = 40;
 let eraseHistory = []; // stack of ImageData snapshots for undo
 
-// Template orientation
-let tmplOrientation = 'portrait'; // 'portrait' or 'landscape'
+// Template PDFs — portrait and landscape stored separately
+let templatePDFportrait = null;  // portrait template PDF doc
+let templatePDFlandscape = null; // landscape template PDF doc
+let tmplOrientation = 'portrait';
+
+// Multi-page proof state
+// proofPages[i] = { canvas, pasteLayer }  — one entry per vendor page
+let proofPages = [];
+let currentProofPage = 0; // 0-indexed, matches vendorPage-1
 
 // Drag/resize
 let dragState = null;
@@ -349,12 +389,15 @@ let dragState = null;
 
   if (sessionStorage.getItem('mp_auth') !== '1') return; // login screen stays visible
 
-  // Logged in — check if template exists
+  // Logged in — check if portrait template exists (required)
   const tmplB64 = ST.get('mp_template');
   if (!tmplB64) {
     showSetup();
   } else {
-    await initTemplateFromB64(tmplB64);
+    await initTemplateFromB64(tmplB64, 'portrait');
+    // Also load landscape template if it's been uploaded
+    const landB64 = ST.get('mp_template_land');
+    if (landB64) await initTemplateFromB64(landB64, 'landscape');
     showApp();
   }
 })();
@@ -381,7 +424,11 @@ function doLogin() {
   if (!tmplB64) {
     showSetup();
   } else {
-    initTemplateFromB64(tmplB64).then(() => showApp());
+    initTemplateFromB64(tmplB64, 'portrait').then(async () => {
+      const landB64 = ST.get('mp_template_land');
+      if (landB64) await initTemplateFromB64(landB64, 'landscape');
+      showApp();
+    });
   }
 }
 
@@ -421,12 +468,17 @@ function savePwd() {
   pwd = nw; ST.set('mp_pwd', nw);
   closeSettings(); toast('Password updated!', 's');
 }
-async function replaceTemplatePDF(inp) {
+async function replaceTemplatePDF(inp, ori) {
   const f = inp.files[0]; if (!f) return;
-  await saveTemplateFile(f);
-  closeSettings();
-  toast('Template replaced — reloading…', 's');
-  setTimeout(() => location.reload(), 1200);
+  await saveTemplateFile(f, ori || 'portrait');
+  await initTemplateFromB64(ST.get(ori === 'landscape' ? 'mp_template_land' : 'mp_template'), ori || 'portrait');
+  if (ori === 'landscape') {
+    const el = document.getElementById('landTmplStatus');
+    if (el) el.textContent = '✓ Landscape template saved!';
+    el.style.color = '#5db535';
+  }
+  toast((ori === 'landscape' ? 'Landscape' : 'Portrait') + ' template updated!', 's');
+  inp.value = '';
 }
 
 /* ── Template Setup Drop Zone ─────────────────────────── */
@@ -462,12 +514,15 @@ async function loadTemplateFile(file) {
   toast('Template saved! You\'re all set.', 's');
 }
 
-async function saveTemplateFile(file) {
+async function saveTemplateFile(file, ori) {
   return new Promise((res, rej) => {
     const reader = new FileReader();
     reader.onload = () => {
-      // Store as base64 data URL
-      ST.set('mp_template', reader.result);
+      if (ori === 'landscape') {
+        ST.set('mp_template_land', reader.result);
+      } else {
+        ST.set('mp_template', reader.result); // portrait key stays the same for backward compat
+      }
       res();
     };
     reader.onerror = rej;
@@ -475,66 +530,177 @@ async function saveTemplateFile(file) {
   });
 }
 
-async function initTemplateFromB64(dataUrl) {
+async function initTemplateFromB64(dataUrl, ori) {
   const base64 = dataUrl.split(',')[1];
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  templatePDF = await pdfjsLib.getDocument({ data: bytes }).promise;
+  const pdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise;
+  if (ori === 'landscape') {
+    templatePDFlandscape = pdfDoc;
+  } else {
+    templatePDFportrait = pdfDoc;
+    templatePDF = pdfDoc; // keep backward compat
+  }
   await renderTemplate();
 }
 
-/* Render the template at the current orientation.
-   - If the PDF has 2 pages: page 1 = portrait, page 2 = landscape.
-   - If the PDF has 1 page: portrait uses it as-is; landscape rotates 90°. */
+/* Render the correct template PDF for the current orientation.
+   Each orientation has its own separately-uploaded PDF — no rotation. */
 async function renderTemplate() {
-  const numPages = templatePDF.numPages;
-  let pageNum = 1;
-  let rotate = 0;
-  if (tmplOrientation === 'landscape') {
-    if (numPages >= 2) { pageNum = 2; rotate = 0; }
-    else { pageNum = 1; rotate = 90; }
+  const pdf = (tmplOrientation === 'landscape') ? templatePDFlandscape : templatePDFportrait;
+  if (!pdf) {
+    // If landscape selected but not uploaded yet, show a message
+    if (tmplOrientation === 'landscape') {
+      toast('No landscape template uploaded. Go to Settings to upload one.', 'e');
+      // Revert to portrait
+      tmplOrientation = 'portrait';
+      document.getElementById('oriPort').className = 'ori-btn act';
+      document.getElementById('oriLand').className = 'ori-btn';
+    }
+    return;
   }
-  const page = await templatePDF.getPage(pageNum);
-  const vp   = page.getViewport({ scale: 3, rotation: rotate });
+  const page = await pdf.getPage(1);
+  const vp   = page.getViewport({ scale: 3 }); // render at 3x, no rotation
   tmplNatW = vp.width;
   tmplNatH = vp.height;
   const tc = document.getElementById('templateCanvas');
   tc.width  = tmplNatW;
   tc.height = tmplNatH;
   await page.render({ canvasContext: tc.getContext('2d'), viewport: vp }).promise;
-  scaleProof();
-  // Clear all pasted images when orientation changes (they won't fit the new layout)
-  const pl = document.getElementById('pasteLayer');
-  pl.querySelectorAll('.pimg').forEach(el => el.remove());
-  document.getElementById('artPh').style.display = 'flex';
+  // Rebuild all proof pages with the new template
+  if (vendorPages > 0) {
+    await buildProofPages();
+  } else {
+    // No vendor loaded yet — just update tmplNatW/H for when it loads
+    scaleProof();
+  }
 }
 
 async function setOrientation(ori) {
-  if (!templatePDF) { toast('Upload a template PDF first', 'e'); return; }
+  if (!templatePDFportrait) { toast('Upload a portrait template in Settings first', 'e'); return; }
   tmplOrientation = ori;
   document.getElementById('oriPort').className = 'ori-btn' + (ori === 'portrait'  ? ' act' : '');
   document.getElementById('oriLand').className = 'ori-btn' + (ori === 'landscape' ? ' act' : '');
   await renderTemplate();
-  toast('Switched to ' + ori + ' proof template', 's');
+  if (ori === 'landscape' && templatePDFlandscape) toast('Switched to landscape proof template', 's');
+}
+
+/* ── Multi-page proof management ────────────────────── */
+
+/* Build one proof page per vendor page.
+   Each page = template canvas + paste layer, all stacked in proofPagesWrap. */
+async function buildProofPages() {
+  const wrap = document.getElementById('proofPagesWrap');
+  wrap.innerHTML = ''; // clear
+  proofPages = [];
+  currentProofPage = 0;
+
+  const pdf = (tmplOrientation === 'landscape') ? templatePDFlandscape : templatePDFportrait;
+  if (!pdf) { toast('Upload a proof template in Settings first', 'e'); return; }
+
+  // Render the template page once (all proof pages share the same template image)
+  const tmplPage = await pdf.getPage(1);
+  const vp = tmplPage.getViewport({ scale: 3 });
+  tmplNatW = vp.width; tmplNatH = vp.height;
+
+  // Compute scale to fit the right panel
+  const rp = document.getElementById('rpanel');
+  const aw = rp.clientWidth  - 32;
+  const ah = rp.clientHeight - 40;
+  proofScale = Math.min(aw / tmplNatW, ah / tmplNatH, 1);
+
+  for (let i = 0; i < vendorPages; i++) {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;padding:8px 8px 0';
+
+    // Page label (only show if multi-page)
+    if (vendorPages > 1) {
+      const lbl = document.createElement('div');
+      lbl.className = 'proof-pg-label';
+      lbl.textContent = `Proof Page ${i + 1} of ${vendorPages}`;
+      wrapper.appendChild(lbl);
+    }
+
+    // Proof page container
+    const pg = document.createElement('div');
+    pg.className = 'proof-page' + (i === 0 ? ' active-pg' : '');
+    pg.style.cssText = `width:${Math.round(tmplNatW * proofScale)}px;height:${Math.round(tmplNatH * proofScale)}px`;
+
+    // Template canvas
+    const tc = document.createElement('canvas');
+    tc.width = tmplNatW; tc.height = tmplNatH;
+    tc.style.cssText = `display:block;width:${Math.round(tmplNatW * proofScale)}px;height:${Math.round(tmplNatH * proofScale)}px`;
+    await tmplPage.render({ canvasContext: tc.getContext('2d'), viewport: vp }).promise;
+
+    // Paste layer
+    const pl = document.createElement('div');
+    pl.className = 'paste-layer';
+    const ph = document.createElement('div');
+    ph.className = 'artph';
+    ph.textContent = 'Paste cropped artwork here';
+    pl.appendChild(ph);
+
+    pg.appendChild(tc);
+    pg.appendChild(pl);
+    wrapper.appendChild(pg);
+    wrap.appendChild(wrapper);
+
+    proofPages.push({ canvas: tc, pasteLayer: pl, placeholder: ph });
+  }
+
+  // Show/hide bottom nav bar
+  const rctrl = document.getElementById('rctrl');
+  if (vendorPages > 1) {
+    rctrl.style.display = 'flex';
+    updateProofPageUI();
+  } else {
+    rctrl.style.display = 'none';
+  }
+
+  // Scroll to top
+  rp.scrollTop = 0;
+}
+
+function switchProofPage(idx) {
+  if (idx < 0 || idx >= proofPages.length) return;
+  // Remove active highlight from old page
+  document.querySelectorAll('.proof-page').forEach(p => p.classList.remove('active-pg'));
+  currentProofPage = idx;
+  // Add active highlight to new page
+  const pages = document.querySelectorAll('.proof-page');
+  if (pages[idx]) {
+    pages[idx].classList.add('active-pg');
+    // Scroll the right panel to show the active proof page
+    pages[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  updateProofPageUI();
+}
+
+function updateProofPageUI() {
+  document.getElementById('rpgi').textContent = `Proof ${currentProofPage + 1} / ${proofPages.length}`;
+  document.getElementById('rPrevBtn').disabled = currentProofPage <= 0;
+  document.getElementById('rNextBtn').disabled = currentProofPage >= proofPages.length - 1;
 }
 
 /* ── Proof scaling ────────────────────────────────────── */
 /* The template canvas has natural size tmplNatW × tmplNatH.
    We CSS-scale proofDoc to fit the right panel.              */
 function scaleProof() {
-  if (!tmplNatW) return;
+  if (!tmplNatW || !proofPages.length) return;
   const rp = document.getElementById('rpanel');
-  const pd = document.getElementById('proofDoc');
-  const wr = document.getElementById('proofWrapper');
-  const aw = rp.clientWidth  - 16;
-  const ah = rp.clientHeight - 16;
-  proofScale = Math.min(aw / tmplNatW, ah / tmplNatH);
-  pd.style.transform = `scale(${proofScale})`;
-  pd.style.width  = tmplNatW + 'px';
-  pd.style.height = tmplNatH + 'px';
-  wr.style.width  = (tmplNatW * proofScale) + 'px';
-  wr.style.height = (tmplNatH * proofScale) + 'px';
+  const aw = rp.clientWidth  - 32;
+  const ah = rp.clientHeight - 40;
+  proofScale = Math.min(aw / tmplNatW, ah / tmplNatH, 1);
+  const sw = Math.round(tmplNatW * proofScale);
+  const sh = Math.round(tmplNatH * proofScale);
+  // Resize all proof page containers and canvases
+  document.querySelectorAll('.proof-page').forEach(pg => {
+    pg.style.width  = sw + 'px';
+    pg.style.height = sh + 'px';
+    const tc = pg.querySelector('canvas');
+    if (tc) { tc.style.width = sw + 'px'; tc.style.height = sh + 'px'; }
+  });
 }
 
 /* ── Vendor PDF drop zone ─────────────────────────────── */
@@ -562,25 +728,64 @@ function loadVendor(inp) { const f = inp.files[0]; if (f) loadVendorFile(f); inp
 
 async function loadVendorFile(file) {
   try {
-    const buf = await file.arrayBuffer();
-    vendorPDF = await pdfjsLib.getDocument({ data: buf }).promise;
-    vendorPages = vendorPDF.numPages; vendorPage = 1;
-    document.getElementById('upzone').style.display = 'none';
-    document.getElementById('cwrap').style.display = 'inline-block';
-    document.getElementById('lctrl').style.display = 'flex';
-    await recalcVendorFit();
-    vendorScale = vendorFitScale;
-    await renderVendor();
-    updatePgUI();
-    setHint('Enable Crop Mode — drag a rectangle, then Paste to Proof →');
-    toast(`"${file.name}" loaded`, 's');
+    const isImage = file.type.startsWith('image/');
+    if (isImage) {
+      await loadVendorImage(file);
+    } else {
+      await loadVendorPDF(file);
+    }
   } catch (err) {
     console.error(err);
-    toast('Could not load PDF', 'e');
+    toast('Could not load file', 'e');
   }
 }
 
+async function loadVendorPDF(file) {
+  const buf = await file.arrayBuffer();
+  vendorPDF = await pdfjsLib.getDocument({ data: buf }).promise;
+  vendorPages = vendorPDF.numPages; vendorPage = 1;
+  document.getElementById('upzone').style.display = 'none';
+  document.getElementById('cwrap').style.display = 'inline-block';
+  document.getElementById('lctrl').style.display = 'flex';
+  await recalcVendorFit();
+  vendorScale = vendorFitScale;
+  await renderVendor();
+  updatePgUI();
+  await buildProofPages();
+  toast(`"${file.name}" loaded — ${vendorPages} page${vendorPages > 1 ? 's' : ''}`, 's');
+  setHint('Enable Crop Mode — drag a rectangle, then Paste to Proof →');
+}
+
+async function loadVendorImage(file) {
+  // Load image and render it onto a canvas to treat it like a 1-page PDF
+  const url = await new Promise(res => {
+    const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file);
+  });
+  const img = await new Promise((res, rej) => {
+    const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url;
+  });
+  // Build a single-page "virtual PDF" via an offscreen canvas
+  const oc = document.createElement('canvas');
+  oc.width = img.naturalWidth; oc.height = img.naturalHeight;
+  oc.getContext('2d').drawImage(img, 0, 0);
+  // Store as a data URL so renderVendor can use it
+  vendorPDF = null; // no PDF doc
+  vendorImageCanvases = [oc]; // array of canvases, one per "page"
+  vendorPages = 1; vendorPage = 1;
+  document.getElementById('upzone').style.display = 'none';
+  document.getElementById('cwrap').style.display = 'inline-block';
+  document.getElementById('lctrl').style.display = 'flex';
+  await recalcVendorFitFromCanvas(oc);
+  vendorScale = vendorFitScale;
+  renderVendorFromCanvas(oc);
+  updatePgUI();
+  await buildProofPages();
+  toast(`"${file.name}" loaded as image`, 's');
+  setHint('Enable Crop Mode — drag a rectangle, then Paste to Proof →');
+}
+
 async function recalcVendorFit() {
+  if (!vendorPDF) return; // image case handled separately
   const page = await vendorPDF.getPage(vendorPage);
   const vp1  = page.getViewport({ scale: 1 });
   const pa   = document.getElementById('pdfarea');
@@ -588,6 +793,29 @@ async function recalcVendorFit() {
   const ah   = pa.clientHeight - 20;
   vendorFitScale = Math.min(aw / vp1.width, ah / vp1.height);
 }
+
+async function recalcVendorFitFromCanvas(oc) {
+  const pa = document.getElementById('pdfarea');
+  const aw = pa.clientWidth - 20, ah = pa.clientHeight - 20;
+  vendorFitScale = Math.min(aw / oc.width, ah / oc.height);
+}
+
+function renderVendorFromCanvas(oc) {
+  const dispW = Math.round(oc.width  * vendorScale);
+  const dispH = Math.round(oc.height * vendorScale);
+  const hiW   = dispW * 2, hiH = dispH * 2;
+  const vc = document.getElementById('vendorCanvas');
+  const sc = document.getElementById('selCanvas');
+  vc.width = sc.width = hiW; vc.height = sc.height = hiH;
+  vc.style.width  = dispW + 'px'; vc.style.height = dispH + 'px';
+  sc.style.width  = dispW + 'px'; sc.style.height = dispH + 'px';
+  vc.getContext('2d').drawImage(oc, 0, 0, hiW, hiH);
+  clearSel(); hasSel = false;
+  document.getElementById('pasteBtn').disabled = true;
+}
+
+// vendorImageCanvases: array of Canvas elements for image-based vendor files
+let vendorImageCanvases = [];
 
 async function renderVendor() {
   const page = await vendorPDF.getPage(vendorPage);
@@ -612,6 +840,16 @@ function gotoPage(d) {
   const np = vendorPage + d;
   if (np < 1 || np > vendorPages) return;
   vendorPage = np; renderVendor(); updatePgUI();
+  // Sync proof page to match vendor page
+  switchProofPage(vendorPage - 1);
+}
+
+function gotoProofPage(d) {
+  const np = currentProofPage + d;
+  if (np < 0 || np >= proofPages.length) return;
+  // Also move the vendor page to match
+  vendorPage = np + 1; renderVendor(); updatePgUI();
+  switchProofPage(np);
 }
 function updatePgUI() {
   document.getElementById('pgi').textContent = `${vendorPage}/${vendorPages}`;
@@ -827,9 +1065,11 @@ async function doPaste() {
   // The hi-res crop (cw×ch) maps to the proof coordinate space.
   // tmplNatW/H is the template's natural pixel size; pasteLayer matches that.
   // We want the crop to fill ~92% of the artArea width or height (whichever fits).
-  const pl  = document.getElementById('pasteLayer');
-  const plW = pl.offsetWidth;
-  const plH = pl.offsetHeight;
+  // Use current proof page paste layer for sizing
+  const curPg = proofPages[currentProofPage];
+  const pl  = curPg ? curPg.pasteLayer : document.querySelector('.paste-layer');
+  const plW = tmplNatW; // use natural template dimensions for layout
+  const plH = tmplNatH;
   const ratio = cw / ch;
   // Start at full artArea size and scale down to fit
   let iw = plW * 0.92;
@@ -837,7 +1077,11 @@ async function doPaste() {
   if (ih > plH * 0.92) { ih = plH * 0.92; iw = ih * ratio; }
   iw = Math.round(iw); ih = Math.round(ih);
 
-  document.getElementById('artPh').style.display = 'none';
+  // Get the current proof page's paste layer
+  const curPage = proofPages[currentProofPage];
+  const targetLayer = curPage ? curPage.pasteLayer : pl;
+  const targetPh    = curPage ? curPage.placeholder : document.getElementById('artPh');
+  targetPh.style.display = 'none';
 
   const div = document.createElement('div');
   div.className = 'pimg';
@@ -853,7 +1097,7 @@ async function doPaste() {
 
   div.addEventListener('mousedown', startMove);
   div.querySelectorAll('.rh').forEach(h => h.addEventListener('mousedown', startResize));
-  pl.appendChild(div);
+  targetLayer.appendChild(div);
 
   clearSel(); hasSel = false;
   document.getElementById('pasteBtn').disabled = true;
@@ -862,9 +1106,12 @@ async function doPaste() {
 }
 
 function rmImg(btn) {
+  const layer = btn.parentElement.parentElement;
   btn.parentElement.remove();
-  if (!document.getElementById('pasteLayer').querySelector('.pimg'))
-    document.getElementById('artPh').style.display = 'flex';
+  if (!layer.querySelector('.pimg')) {
+    const ph = layer.querySelector('.artph');
+    if (ph) ph.style.display = 'flex';
+  }
 }
 
 /* ── Drag / Resize ───────────────────────────────────── */
@@ -891,7 +1138,8 @@ document.addEventListener('mousemove', e => {
   const dx = (e.clientX - dragState.startX) / proofScale;
   const dy = (e.clientY - dragState.startY) / proofScale;
   const el = dragState.el, min = 30;
-  const pl = document.getElementById('pasteLayer');
+  // Get the paste layer from whichever proof page the element lives in
+  const pl = el.closest('.paste-layer') || document.querySelector('.paste-layer');
   if (dragState.type === 'move') {
     el.style.left = Math.max(0, Math.min(pl.offsetWidth  - el.offsetWidth,  dragState.origL + dx)) + 'px';
     el.style.top  = Math.max(0, Math.min(pl.offsetHeight - el.offsetHeight, dragState.origT + dy)) + 'px';
@@ -914,54 +1162,57 @@ document.addEventListener('mousedown', e => {
    offscreen canvas — no html2canvas, pure canvas API,
    pixel-perfect and full resolution.                       */
 async function doExport() {
-  const pasted = document.getElementById('pasteLayer').querySelectorAll('.pimg');
-  if (!pasted.length) { toast('Paste at least one crop before exporting', 'e'); return; }
+  const hasAny = proofPages.some(pg => pg.pasteLayer.querySelector('.pimg'));
+  if (!hasAny) { toast('Paste at least one crop before exporting', 'e'); return; }
   toast('Generating PDF…', 'i');
 
   try {
-    // Output canvas = template natural size
-    const out = document.createElement('canvas');
-    out.width  = tmplNatW;
-    out.height = tmplNatH;
-    const ctx  = out.getContext('2d');
-
-    // Draw template
-    ctx.drawImage(document.getElementById('templateCanvas'), 0, 0);
-
-    // Draw each pasted image at full proof-space coordinates
-    // pasteLayer coords are in proofDoc-space (tmplNatW × tmplNatH)
-    pasted.forEach(div => {
-      const img = div.querySelector('img');
-      const x = (parseInt(div.style.left) || 0);
-      const y = (parseInt(div.style.top)  || 0);
-      const w = div.offsetWidth;
-      const h = div.offsetHeight;
-      ctx.drawImage(img, x, y, w, h);
-    });
-
-    // Convert to PDF
-    const imgData = out.toDataURL('image/jpeg', 0.95);
     const { jsPDF } = window.jspdf;
     const pdfOri = (tmplNatW > tmplNatH) ? 'landscape' : 'portrait';
     const pdf = new jsPDF({ orientation: pdfOri, unit: 'mm', format: 'letter' });
     const pw  = pdf.internal.pageSize.getWidth();
     const ph  = pdf.internal.pageSize.getHeight();
-    const imgH = pw * (out.height / out.width);
 
-    if (imgH <= ph) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, pw, imgH);
-    } else {
-      // Tall template — split into pages
-      const pxPP = (ph / pw) * out.width;
-      let yo = 0, first = true;
-      while (yo < out.height) {
-        const ch = Math.min(pxPP, out.height - yo);
-        const t  = document.createElement('canvas');
-        t.width = out.width; t.height = ch;
-        t.getContext('2d').drawImage(out, 0, yo, out.width, ch, 0, 0, out.width, ch);
-        if (!first) pdf.addPage();
-        pdf.addImage(t.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pw, ch * (ph / pxPP));
-        yo += ch; first = false;
+    // Hide handles/borders on ALL pages before capture
+    document.querySelectorAll('.prm,.rh,.border').forEach(el => el.style.display = 'none');
+
+    for (let i = 0; i < proofPages.length; i++) {
+      const pg = proofPages[i];
+      // Draw template + pasted images onto an offscreen canvas
+      const out = document.createElement('canvas');
+      out.width = tmplNatW; out.height = tmplNatH;
+      const ctx = out.getContext('2d');
+
+      // Draw template
+      ctx.drawImage(pg.canvas, 0, 0);
+
+      // Draw pasted images
+      pg.pasteLayer.querySelectorAll('.pimg').forEach(div => {
+        const img = div.querySelector('img');
+        const x = parseInt(div.style.left) || 0;
+        const y = parseInt(div.style.top)  || 0;
+        const w = div.offsetWidth;
+        const h = div.offsetHeight;
+        ctx.drawImage(img, x, y, w, h);
+      });
+
+      const imgData = out.toDataURL('image/jpeg', 0.95);
+      const imgH = pw * (out.height / out.width);
+      if (i > 0) pdf.addPage();
+      if (imgH <= ph) {
+        pdf.addImage(imgData, 'JPEG', 0, 0, pw, imgH);
+      } else {
+        const pxPP = (ph / pw) * out.width;
+        let yo = 0, first = true;
+        while (yo < out.height) {
+          const ch = Math.min(pxPP, out.height - yo);
+          const t = document.createElement('canvas');
+          t.width = out.width; t.height = ch;
+          t.getContext('2d').drawImage(out, 0, yo, out.width, ch, 0, 0, out.width, ch);
+          if (!first) pdf.addPage();
+          pdf.addImage(t.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pw, ch * (ph / pxPP));
+          yo += ch; first = false;
+        }
       }
     }
 
@@ -970,6 +1221,10 @@ async function doExport() {
   } catch (err) {
     console.error(err);
     toast('Export failed — please try again', 'e');
+  } finally {
+    document.querySelectorAll('.prm').forEach(el => el.style.display = '');
+    document.querySelectorAll('.rh').forEach(el => el.style.display = '');
+    document.querySelectorAll('.border').forEach(el => el.style.display = '');
   }
 }
 
