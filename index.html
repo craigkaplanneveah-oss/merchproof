@@ -602,11 +602,10 @@ async function renderTemplate() {
   const vp   = page.getViewport({ scale: 3 });
   tmplNatW = vp.width;
   tmplNatH = vp.height;
-  // Build/rebuild proof pages if a vendor file is loaded, otherwise just store dimensions
-  if (vendorPages > 0) {
-    await buildProofPages();
-  }
-  // tmplNatW/H are now set — buildProofPages will use them when vendor is uploaded
+  // Always build at least one proof page so the template is visible.
+  // If no vendor is loaded yet, show 1 blank page as a preview.
+  const pagesToBuild = Math.max(vendorPages, 1);
+  await buildProofPages(pagesToBuild);
 }
 
 async function setOrientation(ori) {
@@ -672,11 +671,14 @@ async function processLandTemplate(file) {
 
 /* Build one proof page per vendor page.
    Each page = template canvas + paste layer, all stacked in proofPagesWrap. */
-async function buildProofPages() {
+async function buildProofPages(count) {
   const wrap = document.getElementById('proofPagesWrap');
-  wrap.innerHTML = ''; // clear
+  wrap.innerHTML = '';
   proofPages = [];
   currentProofPage = 0;
+
+  // Use provided count, or fall back to vendorPages, or show 1 preview page
+  const numPages = count !== undefined ? count : Math.max(vendorPages, 1);
 
   const pdf = (tmplOrientation === 'landscape') ? templatePDFlandscape : templatePDFportrait;
   if (!pdf) { toast('Upload a proof template in Settings first', 'e'); return; }
@@ -692,15 +694,15 @@ async function buildProofPages() {
   const ah = rp.clientHeight - 40;
   proofScale = Math.min(aw / tmplNatW, ah / tmplNatH, 1);
 
-  for (let i = 0; i < vendorPages; i++) {
+  for (let i = 0; i < numPages; i++) {
     const wrapper = document.createElement('div');
     wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;padding:8px 8px 0';
 
     // Page label (only show if multi-page)
-    if (vendorPages > 1) {
+    if (numPages > 1) {
       const lbl = document.createElement('div');
       lbl.className = 'proof-pg-label';
-      lbl.textContent = `Proof Page ${i + 1} of ${vendorPages}`;
+      lbl.textContent = `Proof Page ${i + 1} of ${numPages}`;
       wrapper.appendChild(lbl);
     }
 
@@ -733,7 +735,7 @@ async function buildProofPages() {
 
   // Show/hide bottom nav bar
   const rctrl = document.getElementById('rctrl');
-  if (vendorPages > 1) {
+  if (numPages > 1) {
     rctrl.style.display = 'flex';
     updateProofPageUI();
   } else {
@@ -833,7 +835,7 @@ async function loadVendorPDF(file) {
   vendorScale = vendorFitScale;
   await renderVendor();
   updatePgUI();
-  await buildProofPages();
+  await buildProofPages(vendorPages);
   toast(`"${file.name}" loaded — ${vendorPages} page${vendorPages > 1 ? 's' : ''}`, 's');
   setHint('Enable Crop Mode — drag a rectangle, then Paste to Proof →');
 }
@@ -861,7 +863,7 @@ async function loadVendorImage(file) {
   vendorScale = vendorFitScale;
   renderVendorFromCanvas(oc);
   updatePgUI();
-  await buildProofPages();
+  await buildProofPages(vendorPages);
   toast(`"${file.name}" loaded as image`, 's');
   setHint('Enable Crop Mode — drag a rectangle, then Paste to Proof →');
 }
