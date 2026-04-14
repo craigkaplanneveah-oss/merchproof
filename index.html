@@ -177,8 +177,8 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
 
 /* Right panel bottom nav bar */
 .rctrl{height:38px;background:#181818;border-top:1px solid #222;display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0}
-.rpgi{font-size:11px;color:#3a3a3a;font-family:monospace}
-.rnb{padding:3px 9px;background:#222;border:none;border-radius:3px;color:#555;font-size:11px;cursor:pointer;font-family:inherit}.rnb:hover{background:#2a2a2a;color:#aaa}.rnb:disabled{opacity:.25;cursor:default}
+.rpgi{font-size:11px;color:#fff;font-family:monospace;font-weight:600}
+.rnb{padding:3px 9px;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:3px;color:#ccc;font-size:11px;cursor:pointer;font-family:inherit}.rnb:hover{background:#333;color:#fff}.rnb:disabled{opacity:.3;cursor:default}
 
 /* ─── LANDSCAPE UPLOAD MODAL ─── */
 .land-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:700;display:none;align-items:center;justify-content:center}
@@ -217,24 +217,40 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
   </div>
 </div>
 
-<!-- ══ FIRST-RUN SETUP (upload template) ══ -->
+<!-- ══ FIRST-RUN SETUP ══ -->
 <div id="setupScreen">
-  <div class="scard">
-    <h2>👓 Set Up Your Proof Template</h2>
-    <p>Upload your Promotional Source proof template PDF once.<br>
-       It will be saved to this browser and used automatically every session.</p>
+  <!-- Step 1: Portrait template -->
+  <div class="scard" id="setupStep1">
+    <h2>👓 Step 1 of 2 — Portrait Template</h2>
+    <p>Upload your <strong>portrait</strong> Promotional Source proof template PDF.<br>
+       This is your standard 8.5×11 proof template.</p>
     <div class="setup-zone" id="setupZone">
       <div class="setup-zone-ico">📄</div>
-      <div class="setup-zone-t">Drop your template PDF here</div>
+      <div class="setup-zone-t">Drop your portrait template PDF here</div>
       <div class="setup-zone-s">or click Browse to select it</div>
       <label class="setup-browse">Browse PDF
         <input type="file" id="templateFile" accept=".pdf" style="display:none" onchange="loadTemplate(this)">
       </label>
     </div>
-    <div class="setup-note">
-      Your template PDF is stored locally in this browser — it is never uploaded anywhere.<br>
-      To replace it later, use <strong>Settings → Replace Template</strong>.
+    <div class="setup-note">Templates are stored locally — never uploaded anywhere.</div>
+  </div>
+  <!-- Step 2: Landscape template -->
+  <div class="scard" id="setupStep2" style="display:none">
+    <h2>👓 Step 2 of 2 — Landscape Template</h2>
+    <p>Upload your <strong>landscape</strong> (horizontal) Promotional Source proof template PDF.<br>
+       Used automatically when a supplier sends a landscape-format proof.</p>
+    <div class="setup-zone" id="setupZone2">
+      <div class="setup-zone-ico">📄</div>
+      <div class="setup-zone-t">Drop your landscape template PDF here</div>
+      <div class="setup-zone-s">or click Browse to select it</div>
+      <label class="setup-browse">Browse PDF
+        <input type="file" id="templateFileLand" accept=".pdf" style="display:none" onchange="loadTemplateLandSetup(this)">
+      </label>
     </div>
+    <button class="land-cancel" onclick="skipLandscapeSetup()" style="margin-top:14px;font-size:12px;color:#666">
+      Skip for now — I'll upload this later in Settings
+    </button>
+    <div class="setup-note">You can always add or replace this later in Settings.</div>
   </div>
 </div>
 
@@ -542,12 +558,52 @@ function initSetupDrop() {
 function loadTemplate(inp) { const f = inp.files[0]; if (f) loadTemplateFile(f); }
 
 async function loadTemplateFile(file) {
-  toast('Saving template…', 'i');
-  await saveTemplateFile(file);
+  toast('Saving portrait template\u2026', 'i');
+  await saveTemplateFile(file, 'portrait');
   const b64 = ST.get('mp_template');
-  await initTemplateFromB64(b64);
+  await initTemplateFromB64(b64, 'portrait');
+  // Move to step 2 — landscape upload
+  document.getElementById('setupStep1').style.display = 'none';
+  document.getElementById('setupStep2').style.display = 'block';
+  setupLandZoneDrop();
+  toast('Portrait template saved! Now upload the landscape template.', 's');
+}
+
+function setupLandZoneDrop() {
+  const zone = document.getElementById('setupZone2');
+  if (!zone || zone._ddInit) return;
+  zone._ddInit = true;
+  zone.addEventListener('dragenter', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragover',  e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  zone.addEventListener('dragleave', e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag'); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') doLandSetupFile(f);
+    else toast('Please drop a PDF file', 'e');
+  });
+  zone.addEventListener('click', e => {
+    if (!['LABEL','INPUT','BUTTON'].includes(e.target.tagName))
+      document.getElementById('templateFileLand').click();
+  });
+}
+
+function loadTemplateLandSetup(inp) {
+  const f = inp.files[0]; if (f) doLandSetupFile(f);
+}
+
+async function doLandSetupFile(file) {
+  toast('Saving landscape template\u2026', 'i');
+  await saveTemplateFile(file, 'landscape');
+  await initTemplateFromB64(ST.get('mp_template_land'), 'landscape');
+  tmplOrientation = 'portrait'; // default to portrait after both loaded
   showApp();
-  toast('Template saved! You\'re all set.', 's');
+  toast('Both templates saved! Defaulting to portrait.', 's');
+}
+
+function skipLandscapeSetup() {
+  showApp();
+  toast('Ready! You can add the landscape template later via Settings.', 's');
 }
 
 async function saveTemplateFile(file, ori) {
@@ -831,6 +887,8 @@ async function loadVendorPDF(file) {
   document.getElementById('upzone').style.display = 'none';
   document.getElementById('cwrap').style.display = 'inline-block';
   document.getElementById('lctrl').style.display = 'flex';
+  // Auto-detect orientation from page 1 and switch template if needed
+  await autoDetectOrientation();
   await recalcVendorFit();
   vendorScale = vendorFitScale;
   await renderVendor();
@@ -863,6 +921,9 @@ async function loadVendorImage(file) {
   vendorScale = vendorFitScale;
   renderVendorFromCanvas(oc);
   updatePgUI();
+  // Auto-detect orientation from image dimensions
+  const isLandImg = oc.width > oc.height;
+  await autoSwitchOrientation(isLandImg);
   await buildProofPages(vendorPages);
   toast(`"${file.name}" loaded as image`, 's');
   setHint('Enable Crop Mode — drag a rectangle, then Paste to Proof →');
