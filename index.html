@@ -38,20 +38,23 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
 #app{display:none;flex-direction:column;height:100vh}
 
 /* TOP BAR */
-.bar{height:44px;background:#222;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0}
+.bar{background:#222;border-bottom:1px solid #2a2a2a;display:flex;flex-direction:column;padding:6px 12px 8px;gap:5px;flex-shrink:0}
+.bar-top{display:flex;align-items:baseline;gap:10px}
+.bar-tagline{font-size:11px;color:rgba(255,255,255,.65);letter-spacing:.2px}
+.bar-btns{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
 .logo{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.5px;white-space:nowrap}
 .logo em{color:#5db535;font-style:normal}
 .bsep{width:1px;height:22px;background:#2a2a2a}
 .bbtn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border:none;white-space:nowrap;transition:all .15s}
-.bbtn.off{background:#2a2a2a;color:#777;border:1px solid #333}.bbtn.off:hover{background:#333;color:#bbb}
+.bbtn.off{background:#2a2a2a;color:#bbb;border:1px solid #333}.bbtn.off:hover{background:#333;color:#fff}
 .bbtn.on{background:rgba(93,181,53,.15);color:#5db535;border:1px solid #5db535}
 .bbtn.paste{background:#dd6b20;color:#fff}.bbtn.paste:hover{background:#b85515}
 .bbtn.paste:disabled{background:#2a2a2a;color:#3a3a3a;cursor:default}
 .bbtn.export{background:#5db535;color:#fff}.bbtn.export:hover{background:#4a9a29}
-.hint{font-size:11px;color:#4a4a4a;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
+.hint{font-size:11px;color:#ccc;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
 .sp{flex:1}
-.tbsm{padding:4px 10px;background:transparent;border:1px solid #2a2a2a;border-radius:5px;color:#444;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap}
-.tbsm:hover{border-color:#444;color:#888}
+.tbsm{padding:4px 10px;background:transparent;border:1px solid #3a3a3a;border-radius:5px;color:#ccc;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.tbsm:hover{border-color:#666;color:#fff}
 
 /* ─── PANELS ─── */
 .panels{display:flex;flex:1;overflow:hidden}
@@ -80,10 +83,11 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
 .era-popup label{font-size:11px;color:#777}
 .era-popup input[type=range]{width:90px;accent-color:#5db535}
 .era-popup span{font-size:11px;color:#aaa;width:28px;text-align:right}
-.bbtn.undo{background:#2a2a2a;color:#888;border:1px solid #333}.bbtn.undo:hover{background:#333;color:#ccc}.bbtn.undo:disabled{opacity:.3;cursor:default}
+.bbtn.undo{background:#2a2a2a;color:#bbb;border:1px solid #333}.bbtn.undo:hover{background:#333;color:#fff}.bbtn.undo:disabled{opacity:.3;cursor:default}
+.bbtn.unpaste{background:#2a2a2a;color:#bbb;border:1px solid #333}.bbtn.unpaste:hover{background:#333;color:#fff}.bbtn.unpaste:disabled{opacity:.3;cursor:default}
 .ori-grp{display:flex;border:1px solid #333;border-radius:6px;overflow:hidden}
-.ori-btn{padding:5px 10px;background:#2a2a2a;color:#666;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:all .15s}
-.ori-btn:hover{background:#333;color:#bbb}.ori-btn.act{background:rgba(93,181,53,.15);color:#5db535}
+.ori-btn{padding:5px 10px;background:#2a2a2a;color:#bbb;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:all .15s}
+.ori-btn:hover{background:#333;color:#fff}.ori-btn.act{background:rgba(93,181,53,.15);color:#5db535}
 
 /* Bottom controls */
 .lctrl{height:38px;background:#181818;border-top:1px solid #222;display:flex;align-items:center;padding:0 8px;gap:5px;flex-shrink:0}
@@ -257,22 +261,27 @@ html,body{height:100%;font-family:Arial,Helvetica,sans-serif;overflow:hidden;bac
 <!-- ══ APP ══ -->
 <div id="app">
   <div class="bar">
-    <div class="logo">MERCH<em>PROOF</em></div>
-    <div class="bsep"></div>
-    <button class="bbtn off" id="cropBtn" onclick="toggleCrop()">✂ Crop Mode: OFF</button>
-    <button class="bbtn off" id="eraseBtn" onclick="toggleErase()">⬜ Eraser: OFF</button>
-    <button class="bbtn undo" id="undoBtn" onclick="doUndo()" disabled title="Undo last erase">↩ Undo</button>
-    <button class="bbtn paste" id="pasteBtn" onclick="doPaste()" disabled>Paste to Proof →</button>
-    <div class="bsep"></div>
-    <div class="ori-grp" title="Proof template orientation">
-      <button class="ori-btn act" id="oriPort" onclick="setOrientation('portrait')">◻ Portrait</button>
-      <button class="ori-btn" id="oriLand" onclick="setOrientation('landscape')">▭ Landscape</button>
+    <div class="bar-top">
+      <div class="logo">MERCH<em>PROOF</em></div>
+      <div class="bar-tagline">Powered by Promotional Source</div>
     </div>
-    <span class="hint" id="hint">Upload a vendor PDF on the left to begin</span>
-    <div class="sp"></div>
-    <button class="bbtn export" onclick="doExport()">⬇ Export PDF</button>
-    <button class="tbsm" onclick="openSettings()">⚙ Settings</button>
-    <button class="tbsm" onclick="doLogout()">Sign Out</button>
+    <div class="bar-btns">
+      <button class="bbtn off" id="cropBtn" onclick="toggleCrop()">✂ Crop Mode: OFF</button>
+      <button class="bbtn off" id="eraseBtn" onclick="toggleErase()">⬜ Eraser: OFF</button>
+      <button class="bbtn undo" id="undoBtn" onclick="doUndo()" disabled title="Undo last erase">↩ Undo Erase</button>
+      <button class="bbtn unpaste" id="unpasteBtn" onclick="undoPaste()" disabled title="Undo last paste">↩ Undo Paste</button>
+      <button class="bbtn paste" id="pasteBtn" onclick="doPaste()" disabled>Paste to Proof →</button>
+      <div class="bsep"></div>
+      <div class="ori-grp" title="Proof template orientation">
+        <button class="ori-btn act" id="oriPort" onclick="setOrientation('portrait')">◻ Portrait</button>
+        <button class="ori-btn" id="oriLand" onclick="setOrientation('landscape')">▭ Landscape</button>
+      </div>
+      <span class="hint" id="hint">Upload a vendor PDF on the left to begin</span>
+      <div class="sp"></div>
+      <button class="bbtn export" onclick="doExport()">⬇ Export PDF</button>
+      <button class="tbsm" onclick="openSettings()">⚙ Settings</button>
+      <button class="tbsm" onclick="doLogout()">Sign Out</button>
+    </div>
   </div>
 
   <div class="panels">
@@ -429,6 +438,9 @@ let currentProofPage = 0; // 0-indexed, matches vendorPage-1
 
 // Drag/resize
 let dragState = null;
+
+// Paste undo history — stack of { div, pasteLayer, placeholder }
+let pasteHistory = [];
 
 /* ── Bootstrap ───────────────────────────────────────── */
 (async () => {
@@ -732,6 +744,10 @@ async function buildProofPages(count) {
   wrap.innerHTML = '';
   proofPages = [];
   currentProofPage = 0;
+  // Clear paste undo history when pages are rebuilt
+  pasteHistory = [];
+  const ub = document.getElementById('unpasteBtn');
+  if (ub) ub.disabled = true;
 
   // Use provided count, or fall back to vendorPages, or show 1 preview page
   const numPages = count !== undefined ? count : Math.max(vendorPages, 1);
@@ -825,13 +841,18 @@ function updateProofPageUI() {
 
 /* ── Proof scaling ────────────────────────────────────── */
 /* The template canvas has natural size tmplNatW × tmplNatH.
-   We CSS-scale proofDoc to fit the right panel.              */
+   We CSS-scale proof pages to fit the right panel.
+   When scale changes, existing pimgs are rescaled so their
+   CSS-pixel positions stay consistent with the new paste-layer size. */
 function scaleProof() {
   if (!tmplNatW || !proofPages.length) return;
   const rp = document.getElementById('rpanel');
   const aw = rp.clientWidth  - 32;
   const ah = rp.clientHeight - 40;
-  proofScale = Math.min(aw / tmplNatW, ah / tmplNatH, 1);
+  const newScale = Math.min(aw / tmplNatW, ah / tmplNatH, 1);
+  if (newScale === proofScale) return; // nothing to do
+  const ratio = newScale / proofScale; // how much CSS px values need to scale
+  proofScale = newScale;
   const sw = Math.round(tmplNatW * proofScale);
   const sh = Math.round(tmplNatH * proofScale);
   // Resize all proof page containers and canvases
@@ -840,6 +861,20 @@ function scaleProof() {
     pg.style.height = sh + 'px';
     const tc = pg.querySelector('canvas');
     if (tc) { tc.style.width = sw + 'px'; tc.style.height = sh + 'px'; }
+  });
+  // Rescale all pasted images so their CSS-pixel positions/sizes stay
+  // proportional to the new paste-layer dimensions. Without this, pimgs
+  // drifted after a window resize because their CSS values were set at
+  // the old proofScale but the paste layer had resized around them.
+  document.querySelectorAll('.pimg').forEach(div => {
+    const l = parseFloat(div.style.left)  || 0;
+    const t = parseFloat(div.style.top)   || 0;
+    const w = parseFloat(div.style.width)  || div.offsetWidth;
+    const h = parseFloat(div.style.height) || div.offsetHeight;
+    div.style.left   = Math.round(l * ratio) + 'px';
+    div.style.top    = Math.round(t * ratio) + 'px';
+    div.style.width  = Math.round(w * ratio) + 'px';
+    div.style.height = Math.round(h * ratio) + 'px';
   });
 }
 
@@ -1204,69 +1239,81 @@ function clearSel() {
 
 /* ── HIGH-RES PASTE ──────────────────────────────────────
    Re-renders the vendor page at 4× fit scale so crops stay
-   crisp even when enlarged significantly on the proof.      */
+   crisp even when enlarged significantly on the proof.
+   For image-mode vendors the original full-res canvas is
+   used directly (no PDF re-render needed).                  */
 async function doPaste() {
   if (!hasSel) return;
 
   const vc = document.getElementById('vendorCanvas');
-  // Convert selection to fractional page coordinates
+  // Convert selection to fractional page coordinates.
+  // sx/sy/ex/ey are in vendorCanvas pixel space (2× display).
   const fx = Math.min(sx, ex) / vc.width;
   const fy = Math.min(sy, ey) / vc.height;
   const fw = Math.abs(ex - sx) / vc.width;
   const fh = Math.abs(ey - sy) / vc.height;
 
-  // Render vendor page at 4× fit scale for high resolution
-  const hiScale = vendorFitScale * 4;
-  const page    = await vendorPDF.getPage(vendorPage);
-  const hiVP    = page.getViewport({ scale: hiScale });
-  const hiC     = document.createElement('canvas');
-  hiC.width     = hiVP.width;
-  hiC.height    = hiVP.height;
-  await page.render({ canvasContext: hiC.getContext('2d'), viewport: hiVP }).promise;
-  // Bake eraser strokes: draw scaled vendorCanvas on top so white erased areas show in the crop
-  const tmpMask = document.createElement('canvas');
-  tmpMask.width = hiVP.width; tmpMask.height = hiVP.height;
-  tmpMask.getContext('2d').drawImage(vc, 0, 0, hiVP.width, hiVP.height);
-  hiC.getContext('2d').drawImage(tmpMask, 0, 0);
+  // Build hi-res source canvas -------------------------------------------
+  let hiC;
+  if (vendorPDF) {
+    // PDF mode: re-render at 4× fit scale for high resolution
+    const hiScale = vendorFitScale * 4;
+    const page    = await vendorPDF.getPage(vendorPage);
+    const hiVP    = page.getViewport({ scale: hiScale });
+    hiC           = document.createElement('canvas');
+    hiC.width     = hiVP.width;
+    hiC.height    = hiVP.height;
+    await page.render({ canvasContext: hiC.getContext('2d'), viewport: hiVP }).promise;
+    // Bake eraser strokes: draw scaled vendorCanvas on top so white
+    // erased areas transfer into the hi-res crop.
+    const tmpMask = document.createElement('canvas');
+    tmpMask.width = hiVP.width; tmpMask.height = hiVP.height;
+    tmpMask.getContext('2d').drawImage(vc, 0, 0, hiVP.width, hiVP.height);
+    hiC.getContext('2d').drawImage(tmpMask, 0, 0);
+  } else {
+    // Image mode: use the stored original full-res canvas as hi-res source.
+    // vendorPDF is null when the user uploaded a JPEG/PNG/etc.
+    const origC = vendorImageCanvases[vendorPage - 1];
+    if (!origC) return;
+    hiC = document.createElement('canvas');
+    hiC.width  = origC.width;
+    hiC.height = origC.height;
+    hiC.getContext('2d').drawImage(origC, 0, 0);
+    // Bake eraser strokes from the display canvas
+    hiC.getContext('2d').drawImage(vc, 0, 0, hiC.width, hiC.height);
+  }
 
-  // Extract crop region
-  const cx = Math.round(fx * hiVP.width);
-  const cy = Math.round(fy * hiVP.height);
-  const cw = Math.round(fw * hiVP.width);
-  const ch = Math.round(fh * hiVP.height);
+  // Extract crop region --------------------------------------------------
+  const cx = Math.round(fx * hiC.width);
+  const cy = Math.round(fy * hiC.height);
+  const cw = Math.max(1, Math.round(fw * hiC.width));
+  const ch = Math.max(1, Math.round(fh * hiC.height));
   const tmp = document.createElement('canvas');
   tmp.width = cw; tmp.height = ch;
   tmp.getContext('2d').drawImage(hiC, cx, cy, cw, ch, 0, 0, cw, ch);
   const url = tmp.toDataURL('image/png');
 
-  // Initial display size — fill as much of the artArea as possible by default.
-  // The hi-res crop (cw×ch) maps to the proof coordinate space.
-  // tmplNatW/H is the template's natural pixel size; pasteLayer matches that.
-  // We want the crop to fill ~92% of the artArea width or height (whichever fits).
-  // Use current proof page paste layer for sizing.
-  // The paste layer is sized in CSS pixels (tmplNatW * proofScale),
-  // NOT in native template pixels. All position/size values must be CSS pixels.
+  // Size and position in paste-layer CSS pixels --------------------------
+  // The paste layer is tmplNatW*proofScale × tmplNatH*proofScale CSS px.
+  // Use pl.offsetWidth/Height (live layout values) so even a mid-session
+  // resize or orientation change is handled correctly.
   const curPg = proofPages[currentProofPage];
   const pl  = curPg ? curPg.pasteLayer : document.querySelector('.paste-layer');
-  const plW = pl.offsetWidth;   // CSS pixels — e.g. ~450px, not 2448px
+  const plW = pl.offsetWidth;   // CSS pixels of paste layer
   const plH = pl.offsetHeight;
-  // Size proportionally: if you selected 30% of the vendor page width,
-  // the paste starts at 30% of the proof template width.
-  // This gives natural, expected sizing. CSR can always resize with handles.
+
   const cropAspect = cw / ch;
-  let iw = Math.round(fw * plW);   // fw = fraction of vendor page width selected
+  // Initial size: same fraction of proof width as selected on vendor
+  let iw = Math.round(fw * plW);
   let ih = Math.round(iw / cropAspect);
-  // Cap to 95% of proof area so it never overflows, preserving aspect ratio
+  // Cap to 95% of proof area so it never overflows
   if (iw > plW * 0.95) { iw = Math.round(plW * 0.95); ih = Math.round(iw / cropAspect); }
   if (ih > plH * 0.95) { ih = Math.round(plH * 0.95); iw = Math.round(ih * cropAspect); }
   // Minimum size so it's always grabbable
-  if (iw < 40) { iw = 40; ih = Math.round(iw / cropAspect); }
+  if (iw < 40) { iw = 40; ih = Math.max(1, Math.round(iw / cropAspect)); }
 
-  // Get the current proof page's paste layer
-  const curPage = proofPages[currentProofPage];
-  const targetLayer = curPage ? curPage.pasteLayer : pl;
-  const targetPh    = curPage ? curPage.placeholder : document.getElementById('artPh');
-  targetPh.style.display = 'none';
+  const ph = curPg ? curPg.placeholder : null;
+  if (ph) ph.style.display = 'none';
 
   const div = document.createElement('div');
   div.className = 'pimg';
@@ -1282,7 +1329,12 @@ async function doPaste() {
 
   div.addEventListener('mousedown', startMove);
   div.querySelectorAll('.rh').forEach(h => h.addEventListener('mousedown', startResize));
-  targetLayer.appendChild(div);
+  pl.appendChild(div);
+
+  // Record in paste undo history
+  pasteHistory.push({ div, pl, ph: ph || null });
+  const ub = document.getElementById('unpasteBtn');
+  if (ub) ub.disabled = false;
 
   clearSel(); hasSel = false;
   document.getElementById('pasteBtn').disabled = true;
@@ -1297,6 +1349,16 @@ function rmImg(btn) {
     const ph = layer.querySelector('.artph');
     if (ph) ph.style.display = 'flex';
   }
+}
+
+function undoPaste() {
+  if (!pasteHistory.length) return;
+  const { div, pl, ph } = pasteHistory.pop();
+  if (div.parentNode) div.parentNode.removeChild(div);
+  if (ph && !pl.querySelector('.pimg')) ph.style.display = 'flex';
+  const ub = document.getElementById('unpasteBtn');
+  if (ub) ub.disabled = pasteHistory.length === 0;
+  toast('Paste undone.', 'i');
 }
 
 /* ── Drag / Resize ───────────────────────────────────── */
@@ -1314,6 +1376,7 @@ function startResize(e) {
   document.querySelectorAll('.pimg').forEach(p => p.classList.remove('sel'));
   el.classList.add('sel');
   dragState = { type: 'resize', el, handle: this.dataset.h,
+    aspect: el.offsetWidth / el.offsetHeight,
     startX: e.clientX, startY: e.clientY,
     origL: parseInt(el.style.left) || 0, origT: parseInt(el.style.top) || 0,
     origW: el.offsetWidth, origH: el.offsetHeight };
@@ -1330,12 +1393,24 @@ document.addEventListener('mousemove', e => {
     el.style.left = Math.max(0, Math.min(pl.offsetWidth  - el.offsetWidth,  dragState.origL + dx)) + 'px';
     el.style.top  = Math.max(0, Math.min(pl.offsetHeight - el.offsetHeight, dragState.origT + dy)) + 'px';
   } else {
+    // Proportional resize — aspect ratio is locked at drag start
     const h = dragState.handle;
-    const { origL: l, origT: t, origW: w, origH: hh } = dragState;
-    if (h.includes('e')) { el.style.width  = Math.max(min, w + dx)  + 'px'; }
-    if (h.includes('s')) { el.style.height = Math.max(min, hh + dy) + 'px'; }
-    if (h.includes('w')) { const nw = Math.max(min, w - dx);  el.style.width = nw + 'px'; el.style.left = (l + w - nw) + 'px'; }
-    if (h.includes('n')) { const nh = Math.max(min, hh - dy); el.style.height = nh + 'px'; el.style.top  = (t + hh - nh) + 'px'; }
+    const { origL: l, origT: t, origW: w, origH: hh, aspect } = dragState;
+    const minW = 40;
+    let nw = w, nh = hh, nl = l, nt = t;
+    // East/west handles drive width; north/south drive height; corners drive width
+    if (h === 'e')  { nw = Math.max(minW, w + dx);  nh = Math.round(nw / aspect); }
+    if (h === 'w')  { nw = Math.max(minW, w - dx);  nh = Math.round(nw / aspect); nl = l + w - nw; }
+    if (h === 's')  { nh = Math.max(minW, hh + dy); nw = Math.round(nh * aspect); }
+    if (h === 'n')  { nh = Math.max(minW, hh - dy); nw = Math.round(nh * aspect); nt = t + hh - nh; }
+    if (h === 'se') { nw = Math.max(minW, w + dx);  nh = Math.round(nw / aspect); }
+    if (h === 'sw') { nw = Math.max(minW, w - dx);  nh = Math.round(nw / aspect); nl = l + w - nw; }
+    if (h === 'ne') { nw = Math.max(minW, w + dx);  nh = Math.round(nw / aspect); nt = t + hh - nh; }
+    if (h === 'nw') { nw = Math.max(minW, w - dx);  nh = Math.round(nw / aspect); nl = l + w - nw; nt = t + hh - nh; }
+    el.style.width  = nw + 'px';
+    el.style.height = nh + 'px';
+    el.style.left   = nl + 'px';
+    el.style.top    = nt + 'px';
   }
 });
 document.addEventListener('mouseup', () => { dragState = null; });
@@ -1373,10 +1448,14 @@ async function doExport() {
       ctx.drawImage(pg.canvas, 0, 0);
 
       // Draw pasted images.
-      // Paste layer is in CSS pixels (tmplNatW * proofScale wide).
-      // Output canvas is tmplNatW wide (native pixels).
-      // Scale factor = 1/proofScale converts CSS px → native px.
-      const sf = proofScale > 0 ? 1 / proofScale : 1;
+      // The paste layer is CSS-pixel sized (tmplNatW * proofScale wide).
+      // The output canvas is tmplNatW wide (native pixels).
+      // Scale factor converts CSS px → native px using the LIVE paste layer
+      // width rather than the global proofScale, so resizes between paste
+      // and export don't corrupt positions (scaleProof keeps pimgs in sync,
+      // but using offsetWidth here is an extra safety net).
+      const plW = pg.pasteLayer.offsetWidth;
+      const sf  = plW > 0 ? tmplNatW / plW : 1;
       pg.pasteLayer.querySelectorAll('.pimg').forEach(div => {
         const img = div.querySelector('img');
         const x = (parseInt(div.style.left) || 0) * sf;
